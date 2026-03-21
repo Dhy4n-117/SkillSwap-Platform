@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SkillSwap — Student Skill Exchange</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#faf8f5;--bg2:#f3efe8;--surface:#fff;
+  --border:#e8e2d9;--border2:#d6cfc4;
+  --text:#1a1714;--sub:#7a7168;--muted:#b0a898;
+  --rose:#e8604c;--rose-soft:#fdecea;
+  --sage:#4a7c6f;--sage-soft:#e8f2ef;
+  --amber:#c87941;--amber-soft:#fdf0e6;
+  --indigo:#5b5ea6;--indigo-soft:#eeeef8;
+  --sky:#3b7abf;--sky-soft:#e8f1fa;
+  --plum:#8b4f8e;--plum-soft:#f4eaf5;
+  --r:24px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 900px 600px at 5% 0%,rgba(232,96,76,.06),transparent 60%),
+             radial-gradient(ellipse 700px 500px at 95% 15%,rgba(91,94,166,.05),transparent 60%),
+             radial-gradient(ellipse 600px 500px at 50% 100%,rgba(74,124,111,.04),transparent 60%);}
+
+/* ─── NAV ─── */
+nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:14px 44px;background:rgba(250,248,245,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:900;letter-spacing:-0.5px;color:var(--text);display:flex;align-items:center;gap:10px;cursor:pointer;}
+.lm{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--rose),var(--amber));display:flex;align-items:center;justify-content:center;font-size:1rem;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;box-shadow:inset 0 2px 4px rgba(255,255,255,0.4),0 4px 12px rgba(232,96,76,0.25);}
+.logo em{font-style:normal;color:var(--rose);}
+.nav-links{display:flex;gap:6px;}
+.nl{padding:8px 14px;border-radius:50px;border:none;background:transparent;color:var(--sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.nl:hover,.nl.active{background:var(--bg2);color:var(--text);}
+.nav-r{display:flex;gap:8px;align-items:center;}
+.btn-o{padding:8px 18px;border-radius:50px;border:1.5px solid var(--border2);background:transparent;color:var(--sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:.83rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.btn-o:hover{border-color:var(--text);color:var(--text);transform:translateY(-1px);background:var(--surface);}
+.btn-f{padding:8px 20px;border-radius:50px;border:none;background:var(--text);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.83rem;font-weight:600;cursor:pointer;transition:all .25s ease;}
+.btn-f:hover{background:#2e2a26;transform:translateY(-2px);box-shadow:0 6px 16px rgba(26,23,20,.15);}
+.pts-badge{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:50px;background:var(--amber-soft);border:1px solid rgba(200,121,65,.2);font-size:.82rem;font-weight:600;color:var(--amber);}
+.hbg{display:none;flex-direction:column;justify-content:center;gap:5px;width:36px;height:36px;border-radius:9px;background:var(--bg2);border:1.5px solid var(--border);cursor:pointer;padding:7px;}
+.hbg span{display:block;height:2px;background:var(--text);border-radius:2px;transition:all .28s;}
+.hbg.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hbg.open span:nth-child(2){opacity:0;}
+.hbg.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.mob-menu{display:flex;flex-direction:column;gap:2px;position:fixed;top:57px;left:0;right:0;z-index:199;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px 16px;box-shadow:0 8px 30px rgba(26,23,20,.08);transform:translateY(-10px);opacity:0;pointer-events:none;visibility:hidden;transition:all .25s cubic-bezier(.34,1.56,.64,1);}
+.mob-menu.open{transform:translateY(0);opacity:1;pointer-events:all;visibility:visible;}
+.mml{display:block;padding:12px;font-size:.95rem;font-weight:500;color:var(--sub);border-radius:10px;cursor:pointer;transition:all .18s;}
+.mml:hover{background:var(--bg2);color:var(--text);}
+.mob-menu-btns{display:flex;gap:8px;margin-top:8px;}
+
+/* ─── PAGES ─── */
+.page{display:none;position:relative;z-index:1;}
+.page.active{display:block;}
+
+/* ─── SHARED ─── */
+.wrap{max-width:1200px;margin:0 auto;padding:0 44px;}
+.section-title{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;margin-bottom:4px;}
+.section-sub{color:var(--sub);font-size:.9rem;margin-bottom:28px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:transform .3s cubic-bezier(.175,.885,.32,1.275),box-shadow .3s,border-color .25s;animation:fadeUp .5s ease both;}
+.card:hover{transform:translateY(-6px) scale(1.01);box-shadow:0 16px 48px rgba(26,23,20,.08);border-color:var(--border2);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
+
+/* ─── HOME PAGE ─── */
+.hero{padding:64px 44px 48px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;max-width:1200px;margin:0 auto;}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;background:var(--rose-soft);border:1px solid rgba(232,96,76,.2);border-radius:50px;padding:5px 13px;font-size:.76rem;font-weight:600;color:var(--rose);text-transform:uppercase;letter-spacing:.8px;margin-bottom:20px;}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--rose);animation:blink 2s infinite;}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,4vw,3.6rem);font-weight:900;line-height:1.08;letter-spacing:-1.5px;margin-bottom:18px;}
+.hero h1 em{color:var(--rose);font-style:italic;}
+.hero p{color:var(--sub);font-size:1rem;line-height:1.65;max-width:420px;margin-bottom:32px;}
+.ctas{display:flex;gap:10px;flex-wrap:wrap;}
+.cta1{padding:13px 26px;border-radius:50px;background:var(--rose);border:none;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.93rem;font-weight:600;cursor:pointer;transition:all .25s;}
+.cta1:hover{background:#d4503c;transform:translateY(-2px);box-shadow:0 8px 22px rgba(232,96,76,.3);}
+.cta2{padding:13px 22px;border-radius:50px;background:transparent;border:1.5px solid var(--border2);color:var(--sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:.93rem;font-weight:500;cursor:pointer;transition:all .25s;}
+.cta2:hover{border-color:var(--text);color:var(--text);}
+.hero-r{position:relative;height:360px;}
+.fc{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;box-shadow:0 4px 20px rgba(26,23,20,.07);animation:floatY 6s ease-in-out infinite;}
+.fc:nth-child(1){top:0;left:8%;width:195px;animation-delay:0s;}
+.fc:nth-child(2){top:80px;right:0;width:205px;animation-delay:-2s;}
+.fc:nth-child(3){bottom:20px;left:2%;width:190px;animation-delay:-4s;}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.fi{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:10px;}
+.ft{font-family:'Playfair Display',serif;font-size:.93rem;font-weight:700;margin-bottom:3px;}
+.fb{font-size:.72rem;color:var(--sub);margin-bottom:8px;}
+.fp{display:inline-block;font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:20px;}
+.stats{display:flex;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.si{flex:1;text-align:center;padding:24px 16px;border-right:1px solid var(--border);transition:background .2s;}
+.si:last-child{border-right:none;}
+.si:hover{background:var(--bg2);}
+.sn{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;color:var(--text);display:block;}
+.sl{font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:3px;}
+
+/* ─── SEARCH / FILTER ─── */
+.filter-zone{padding:40px 44px 0;max-width:1200px;margin:0 auto;}
+.sr{display:flex;gap:10px;margin-bottom:22px;align-items:center;}
+.sb{flex:1;position:relative;}
+.si2{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:.95rem;}
+#searchInput{width:100%;padding:13px 16px 13px 42px;background:var(--surface);border:1.5px solid var(--border);border-radius:50px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:.93rem;outline:none;transition:all .25s;}
+#searchInput:focus{border-color:var(--rose);box-shadow:0 0 0 4px rgba(232,96,76,.1), 0 4px 12px rgba(26,23,20,.05);}
+#searchInput::placeholder{color:var(--muted);}
+.fb2{display:flex;align-items:center;gap:7px;padding:13px 20px;border-radius:50px;background:var(--surface);border:1.5px solid var(--border);color:var(--sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:.86rem;font-weight:500;cursor:pointer;transition:all .25s ease;white-space:nowrap;}
+.fb2:hover{border-color:var(--text);color:var(--text);transform:translateY(-1px);background:var(--bg2);}
+.cr{display:flex;flex-wrap:wrap;gap:7px;}
+.cp{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:50px;background:var(--surface);border:1.5px solid var(--border);color:var(--sub);font-size:.82rem;font-weight:500;cursor:pointer;transition:all .22s;user-select:none;white-space:nowrap;}
+.cp .cc{background:var(--bg2);border-radius:50px;padding:1px 7px;font-size:.7rem;color:var(--muted);}
+.cp:hover{border-color:var(--border2);color:var(--text);}
+.cp.active{background:var(--text);border-color:var(--text);color:#fff;font-weight:600;}
+.cp.active .cc{background:rgba(255,255,255,.15);color:rgba(255,255,255,.7);}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:16px 44px 20px;max-width:1200px;margin:0 auto;flex-wrap:wrap;gap:10px;}
+.rt{font-size:.86rem;color:var(--sub);}
+.rt strong{color:var(--text);}
+.tr{display:flex;gap:7px;align-items:center;}
+.sbt{padding:6px 13px;border-radius:50px;background:transparent;border:1.5px solid var(--border);color:var(--sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.sbt.active{background:var(--bg2);border-color:var(--border2);color:var(--text);font-weight:600;}
+.sbt:hover{border-color:var(--border2);color:var(--text);}
+.vb{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:transparent;border:1.5px solid var(--border);color:var(--muted);cursor:pointer;transition:all .2s;font-size:.9rem;}
+.vb.active{background:var(--bg2);border-color:var(--border2);color:var(--text);}
+.gw{padding:0 44px 64px;max-width:1200px;margin:0 auto;}
+#cardGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:20px;}
+#cardGrid.list-view{grid-template-columns:1fr;}
+.cbar{height:5px;width:100%;}
+.cb{padding:20px;}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cchip{display:flex;align-items:center;gap:5px;font-size:.73rem;font-weight:600;padding:4px 11px;border-radius:50px;}
+.nbadge{font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:6px;background:var(--rose-soft);color:var(--rose);border:1px solid rgba(232,96,76,.2);}
+.rrow{display:flex;align-items:center;gap:3px;font-size:.78rem;color:var(--sub);}
+.st{color:#f59e0b;}
+.ctitle{font-family:'Playfair Display',serif;font-size:1.08rem;font-weight:700;line-height:1.3;margin-bottom:9px;}
+.cdesc{font-size:.85rem;color:var(--sub);line-height:1.55;margin-bottom:14px;}
+.ctags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;}
+.tag{font-size:.72rem;padding:3px 10px;border-radius:50px;border:1px solid var(--border);color:var(--muted);background:var(--bg);}
+.cf{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border);}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:.78rem;font-weight:700;flex-shrink:0;}
+.sname{font-size:.84rem;font-weight:600;}
+.sdept{font-size:.71rem;color:var(--muted);}
+.ptag{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;}
+.psub{font-size:.7rem;color:var(--muted);text-align:right;}
+#emptyState{display:none;grid-column:1/-1;text-align:center;padding:70px 20px;}
+#emptyState .ei{font-size:2.8rem;margin-bottom:14px;}
+#emptyState h3{font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:7px;}
+#emptyState p{color:var(--sub);}
+
+/* ─── MODAL ─── */
+#modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(26,23,20,.32);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:20px;}
+#modal.open{display:flex;}
+.mbox{background:var(--surface);border:1px solid var(--border);border-radius:24px;max-width:520px;width:100%;overflow:hidden;position:relative;animation:mIn .32s cubic-bezier(.34,1.56,.64,1);box-shadow:0 28px 70px rgba(26,23,20,.14);}
+@keyframes mIn{from{opacity:0;transform:scale(.92) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.mb{height:6px;}
+.mc{padding:28px;}
+.mx{position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);color:var(--sub);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.95rem;transition:all .2s;}
+.mx:hover{background:var(--border);color:var(--text);}
+.mcat{font-size:.76rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.8px;margin-bottom:9px;}
+.mtitle{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;margin-bottom:12px;line-height:1.2;}
+.mdesc{color:var(--sub);line-height:1.65;margin-bottom:22px;font-size:.93rem;}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px;}
+.ms{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:13px 14px;}
+.msl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px;}
+.msv{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;}
+.ma{display:flex;gap:9px;}
+.mb1{flex:1;padding:13px;border-radius:50px;background:var(--rose);border:none;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.mb1:hover{background:#d4503c;transform:translateY(-1px);box-shadow:0 6px 18px rgba(232,96,76,.3);}
+.mb2{padding:13px 18px;border-radius:50px;background:transparent;border:1.5px solid var(--border2);color:var(--sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.mb2:hover{border-color:var(--text);color:var(--text);}
+
+/* ─── PROFILE PAGE ─── */
+.profile-hero{background:linear-gradient(135deg,var(--rose-soft) 0%,var(--bg) 60%);padding:48px 44px 0;position:relative;overflow:hidden;}
+.profile-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(232,96,76,.1),transparent 70%);pointer-events:none;}
+.ph-inner{max-width:1200px;margin:0 auto;display:flex;gap:32px;align-items:flex-end;flex-wrap:wrap;}
+.ph-av{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,var(--rose),var(--amber));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 8px 28px rgba(232,96,76,.3);border:4px solid var(--surface);}
+.ph-info{flex:1;}
+.ph-name{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:900;letter-spacing:-.5px;margin-bottom:5px;}
+.ph-meta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
+.ph-tag{display:flex;align-items:center;gap:5px;font-size:.82rem;color:var(--sub);}
+.ph-pts{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:50px;background:var(--amber-soft);border:1px solid rgba(200,121,65,.2);font-size:.82rem;font-weight:700;color:var(--amber);}
+.ph-actions{display:flex;gap:8px;margin-bottom:28px;margin-top:4px;}
+.ph-tabs{display:flex;gap:4px;border-top:1px solid var(--border);margin-top:8px;}
+.ph-tab{padding:12px 20px;font-size:.87rem;font-weight:500;color:var(--sub);border:none;background:transparent;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1px;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif;}
+.ph-tab.active{color:var(--rose);border-bottom-color:var(--rose);font-weight:600;}
+.ph-tab:hover{color:var(--text);}
+.profile-body{padding:32px 44px 64px;max-width:1200px;margin:0 auto;}
+.profile-grid{display:grid;grid-template-columns:1fr 2fr;gap:28px;}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;}
+.pcard-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:16px;}
+.skill-pill-list{display:flex;flex-wrap:wrap;gap:8px;}
+.sk-pill{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;font-size:.8rem;font-weight:600;}
+.rating-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.rb-label{font-size:.82rem;color:var(--sub);width:80px;flex-shrink:0;}
+.rb-track{flex:1;height:7px;background:var(--bg2);border-radius:10px;overflow:hidden;}
+.rb-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--rose),var(--amber));transition:width .6s ease;}
+.rb-val{font-size:.8rem;font-weight:600;width:28px;text-align:right;}
+.review-card{background:var(--bg);border-radius:12px;padding:16px;margin-bottom:12px;}
+.rv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.rv-name{font-size:.85rem;font-weight:600;}
+.rv-stars{color:#f59e0b;font-size:.9rem;}
+.rv-text{font-size:.84rem;color:var(--sub);line-height:1.55;}
+.badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.badge{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;}
+.badge-icon{font-size:1.6rem;margin-bottom:6px;}
+.badge-name{font-size:.78rem;font-weight:600;color:var(--text);}
+.badge-desc{font-size:.7rem;color:var(--muted);margin-top:2px;}
+.my-listings-grid{display:grid;gap:14px;}
+.ml-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;align-items:center;gap:16px;}
+.ml-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+.ml-info{flex:1;}
+.ml-title{font-family:'Playfair Display',serif;font-size:.97rem;font-weight:700;margin-bottom:3px;}
+.ml-meta{font-size:.78rem;color:var(--muted);}
+.ml-actions{display:flex;gap:6px;}
+.ml-btn{padding:6px 14px;border-radius:8px;font-size:.78rem;font-weight:500;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;}
+.ml-edit{background:var(--bg2);border:1px solid var(--border);color:var(--sub);}
+.ml-edit:hover{border-color:var(--border2);color:var(--text);}
+.ml-del{background:var(--rose-soft);border:1px solid rgba(232,96,76,.2);color:var(--rose);}
+
+/* ─── CREATE LISTING PAGE ─── */
+.create-wrap{max-width:720px;margin:0 auto;padding:48px 44px 80px;}
+.create-header{margin-bottom:36px;}
+.create-header h2{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;margin-bottom:6px;}
+.create-header p{color:var(--sub);font-size:.95rem;}
+.form-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;margin-bottom:20px;}
+.fs-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.fs-num{width:26px;height:26px;border-radius:50%;background:var(--rose);color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.frow{margin-bottom:20px;}
+.frow:last-child{margin-bottom:0;}
+label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var(--text);}
+.finput,.fselect,.ftextarea{width:100%;padding:13px 18px;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;outline:none;transition:all .3s cubic-bezier(.25,.8,.25,1);}
+.finput:focus,.fselect:focus,.ftextarea:focus{border-color:var(--rose);background:var(--surface);box-shadow:0 0 0 4px rgba(232,96,76,.08), 0 4px 16px rgba(26,23,20,.04);}
+.finput::placeholder,.ftextarea::placeholder{color:var(--muted);}
+.ftextarea{resize:vertical;min-height:120px;line-height:1.6;}
+.fselect{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b0a898' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;cursor:pointer;}
+.frow-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.tag-input-wrap{display:flex;flex-wrap:wrap;gap:7px;padding:10px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;min-height:48px;cursor:text;transition:all .25s;}
+.tag-input-wrap:focus-within{border-color:var(--rose);background:var(--surface);box-shadow:0 0 0 4px rgba(232,96,76,.07);}
+.tag-chip{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;background:var(--rose-soft);color:var(--rose);font-size:.78rem;font-weight:600;}
+.tag-chip button{background:none;border:none;cursor:pointer;color:var(--rose);font-size:.9rem;padding:0;line-height:1;}
+#tagRaw{border:none;background:transparent;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;color:var(--text);min-width:80px;flex:1;}
+.exchange-opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.exopt{padding:14px 12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);text-align:center;cursor:pointer;transition:all .22s;}
+.exopt.active{border-color:var(--rose);background:var(--rose-soft);}
+.exopt .eo-icon{font-size:1.4rem;margin-bottom:5px;}
+.exopt .eo-label{font-size:.8rem;font-weight:600;color:var(--sub);}
+.exopt.active .eo-label{color:var(--rose);}
+.char-count{text-align:right;font-size:.75rem;color:var(--muted);margin-top:5px;}
+.submit-bar{display:flex;gap:12px;justify-content:flex-end;margin-top:8px;}
+.sbtn-ghost{padding:13px 24px;border-radius:50px;border:1.5px solid var(--border2);background:transparent;color:var(--sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.sbtn-ghost:hover{border-color:var(--text);color:var(--text);background:var(--surface);transform:translateY(-1px);}
+.sbtn-main{padding:13px 32px;border-radius:50px;border:none;background:var(--rose);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;transition:all .25s ease;}
+.sbtn-main:hover{background:#d4503c;transform:translateY(-2px);box-shadow:0 8px 24px rgba(232,96,76,.35);}
+.preview-card{background:linear-gradient(135deg,var(--rose-soft),var(--bg));border:1px solid rgba(232,96,76,.2);border-radius:18px;padding:20px;margin-top:16px;transition:box-shadow .3s;}
+.pc-label{font-size:.74rem;font-weight:600;color:var(--rose);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;}
+
+/* ─── CHAT PAGE ─── */
+.chat-wrap{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 57px);max-width:1200px;margin:0 auto;}
+.chat-sidebar{border-right:1px solid var(--border);background:var(--surface);overflow-y:auto;}
+.cs-header{padding:20px 18px 14px;border-bottom:1px solid var(--border);}
+.cs-header h3{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;margin-bottom:12px;}
+.cs-search{position:relative;}
+.cs-search input{width:100%;padding:9px 12px 9px 36px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.83rem;color:var(--text);outline:none;transition:all .2s;}
+.cs-search input:focus{border-color:var(--rose);}
+.cs-search input::placeholder{color:var(--muted);}
+.cs-search .si3{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;}
+.conv-list{padding:8px;}
+.conv{display:flex;gap:11px;padding:11px 10px;border-radius:12px;cursor:pointer;transition:all .18s;align-items:center;}
+.conv:hover{background:var(--bg2);}
+.conv.active{background:var(--rose-soft);}
+.conv-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:.88rem;font-weight:700;flex-shrink:0;}
+.conv-info{flex:1;min-width:0;}
+.conv-name{font-size:.87rem;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conv-preview{font-size:.77rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.conv-time{font-size:.7rem;color:var(--muted);}
+.conv-unread{width:18px;height:18px;border-radius:50%;background:var(--rose);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.chat-main{display:flex;flex-direction:column;background:var(--bg);}
+.cm-header{padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;}
+.cm-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:.85rem;font-weight:700;flex-shrink:0;}
+.cm-name{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;}
+.cm-status{font-size:.76rem;color:var(--sage);font-weight:500;}
+.cm-actions{margin-left:auto;display:flex;gap:8px;}
+.cm-btn{padding:7px 14px;border-radius:8px;font-size:.78rem;font-weight:500;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;border:1.5px solid var(--border);background:transparent;color:var(--sub);}
+.cm-btn:hover{border-color:var(--border2);color:var(--text);}
+.cm-btn.primary{background:var(--rose);border-color:var(--rose);color:#fff;}
+.cm-btn.primary:hover{background:#d4503c;}
+.messages{flex:1;overflow-y:auto;padding:24px 24px 8px;display:flex;flex-direction:column;gap:14px;}
+.msg-date{text-align:center;font-size:.74rem;color:var(--muted);background:var(--bg2);padding:4px 14px;border-radius:20px;align-self:center;}
+.msg{display:flex;gap:10px;max-width:70%;}
+.msg.mine{align-self:flex-end;flex-direction:row-reverse;}
+.msg-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0;align-self:flex-end;}
+.msg-content{flex:1;min-width:0;}
+.msg-bubble{padding:11px 15px;border-radius:18px;font-size:.88rem;line-height:1.55;max-width:100%;word-break:break-word;}
+.msg .msg-bubble{background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:5px;color:var(--text);}
+.msg.mine .msg-bubble{background:var(--rose);color:#fff;border-bottom-right-radius:5px;}
+.msg-time{font-size:.68rem;color:var(--muted);margin-top:4px;}
+.msg{animation: slideIn .3s cubic-bezier(.175,.885,.32,1.275) both;}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.msg.mine .msg-time{text-align:right;}
+.skill-request-bubble{background:var(--amber-soft);border:1px solid rgba(200,121,65,.2);border-radius:16px;padding:14px 16px;margin-bottom:4px;}
+.srb-label{font-size:.72rem;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px;}
+.srb-title{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;margin-bottom:5px;}
+.srb-acts{display:flex;gap:8px;margin-top:10px;}
+.srb-accept{padding:7px 16px;border-radius:8px;background:var(--sage);border:none;color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+.srb-decline{padding:7px 14px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--sub);font-size:.78rem;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+.msg-input-bar{padding:16px 20px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end;}
+.msg-input-wrap{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:8px;transition:all .3s cubic-bezier(.25,.8,.25,1);}
+.msg-input-wrap:focus-within{border-color:var(--rose);background:var(--surface);box-shadow:0 0 0 4px rgba(232,96,76,.08);}
+#msgInput{flex:1;border:none;background:transparent;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;resize:none;max-height:100px;line-height:1.5;}
+#msgInput::placeholder{color:var(--muted);}
+.attach-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.1rem;transition:color .2s;padding:2px;}
+.attach-btn:hover{color:var(--text);}
+.send-btn{width:40px;height:40px;border-radius:12px;background:var(--rose);border:none;color:#fff;font-size:1rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.send-btn:hover{background:#d4503c;transform:scale(1.05);}
+
+/* ─── AUTH PAGE ─── */
+.auth-wrap{min-height:calc(100vh - 57px);display:flex;align-items:center;justify-content:center;padding:40px 20px;}
+.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:24px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 20px 60px rgba(26,23,20,.1);}
+.auth-top{background:linear-gradient(135deg,var(--rose-soft),var(--amber-soft));padding:32px 32px 24px;text-align:center;}
+.auth-logo{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:12px;color:var(--text);}
+.auth-logo .lm{width:40px;height:40px;border-radius:12px;font-size:1.1rem;box-shadow:inset 0 2px 5px rgba(255,255,255,0.35),0 6px 16px rgba(232,96,76,0.3);}
+.auth-logo em{color:var(--rose);font-style:normal;}
+.auth-sub{font-size:.87rem;color:var(--sub);}
+.auth-tabs{display:flex;background:var(--bg2);border-radius:10px;padding:4px;margin:20px 32px 0;}
+.at{flex:1;padding:9px;border-radius:7px;border:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s;background:transparent;color:var(--sub);}
+.at.active{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 4px rgba(26,23,20,.08);}
+.auth-form{padding:28px 32px 32px;}
+.auth-frow{margin-bottom:16px;}
+.auth-frow label{display:block;font-size:.83rem;font-weight:600;margin-bottom:6px;}
+.auth-input{width:100%;padding:13px 18px;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.93rem;color:var(--text);outline:none;transition:all .3s cubic-bezier(.25,.8,.25,1);}
+.auth-input:focus{border-color:var(--rose);background:var(--surface);box-shadow:0 0 0 4px rgba(232,96,76,.08), 0 4px 16px rgba(26,23,20,.04);}
+.auth-input::placeholder{color:var(--muted);}
+.auth-btn{width:100%;padding:14px;border-radius:14px;background:var(--rose);border:none;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .25s ease;margin-top:8px;}
+.auth-btn:hover{background:#d4503c;transform:translateY(-2px);box-shadow:0 8px 24px rgba(232,96,76,.35);}
+.auth-divider{text-align:center;font-size:.8rem;color:var(--muted);margin:16px 0;position:relative;}
+.auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border);}
+.auth-divider::before{left:0;}
+.auth-divider::after{right:0;}
+.social-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.social-btn{padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;color:var(--sub);}
+.social-btn:hover{border-color:var(--border2);color:var(--text);}
+.auth-footer{text-align:center;font-size:.8rem;color:var(--muted);padding:0 32px 24px;}
+.auth-footer a{color:var(--rose);font-weight:600;cursor:pointer;text-decoration:none;}
+.interest-chips{display:flex;flex-wrap:wrap;gap:7px;}
+.ic{padding:7px 14px;border-radius:50px;border:1.5px solid var(--border);background:var(--bg);font-size:.8rem;font-weight:500;cursor:pointer;transition:all .2s;color:var(--sub);}
+.ic.active{background:var(--rose-soft);border-color:rgba(232,96,76,.3);color:var(--rose);font-weight:600;}
+
+/* ─── TOAST ─── */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:#fff;padding:11px 24px;border-radius:50px;font-size:.86rem;font-weight:600;opacity:0;pointer-events:none;z-index:1000;transition:all .32s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 28px rgba(26,23,20,.2);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px;}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:1024px){
+  nav{padding:13px 24px;}
+  .hero,.filter-zone,.toolbar,.gw,.profile-body{padding-left:24px;padding-right:24px;}
+  .hero{gap:24px;}
+  .create-wrap{padding:36px 24px 60px;}
+  .chat-wrap{max-width:100%;}
+}
+@media(max-width:768px){
+  nav{padding:13px 16px;}
+  .nav-links{display:none;}
+  .nav-r .btn-o,.nav-r .btn-f,.nav-r .pts-badge{display:none;}
+  .hbg{display:flex;}
+  .hero{grid-template-columns:1fr;padding:36px 16px 28px;text-align:center;}
+  .hero-r{display:none;}
+  .eyebrow{margin:0 auto 18px;}
+  .hero h1{font-size:2.2rem;}
+  .hero p{margin:0 auto 26px;}
+  .ctas{justify-content:center;}
+  .stats{flex-wrap:wrap;}
+  .si{flex:1 1 50%;border-bottom:1px solid var(--border);}
+  .si:nth-child(2){border-right:none;}
+  .filter-zone{padding:24px 16px 0;}
+  .sr{flex-direction:column;}
+  .fb2{width:100%;justify-content:center;}
+  .cr{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;scrollbar-width:none;}
+  .cr::-webkit-scrollbar{display:none;}
+  .cp{flex-shrink:0;}
+  .toolbar{padding:12px 16px 16px;}
+  .gw{padding:0 16px 56px;}
+  #cardGrid{grid-template-columns:1fr;gap:14px;}
+  .profile-hero{padding:32px 16px 0;}
+  .ph-av{width:76px;height:76px;font-size:1.7rem;}
+  .ph-name{font-size:1.5rem;}
+  .profile-body{padding:24px 16px 56px;}
+  .profile-grid{grid-template-columns:1fr;}
+  .create-wrap{padding:28px 16px 56px;}
+  .frow-2{grid-template-columns:1fr;}
+  .exchange-opts{grid-template-columns:1fr 1fr 1fr;}
+  .chat-wrap{grid-template-columns:1fr;height:auto;}
+  .chat-sidebar{display:none;height:260px;}
+  .chat-sidebar.mob-open{display:block;}
+  .chat-main{height:calc(100vh - 57px);}
+  .mbox{border-radius:20px 20px 0 0;max-width:100%;margin-top:auto;}
+  #modal{align-items:flex-end;padding:0;}
+  .mg{grid-template-columns:1fr 1fr;}
+  .auth-tabs{margin:16px 20px 0;}
+  .auth-form{padding:22px 20px 24px;}
+  .auth-footer{padding:0 20px 20px;}
+  .auth-top{padding:24px 20px 18px;}
+  #toast{width:calc(100% - 32px);text-align:center;}
+}
+@media(max-width:400px){
+  .hero h1{font-size:1.9rem;}
+  .ctas{flex-direction:column;}
+  .cta1,.cta2{text-align:center;}
+  .exchange-opts{grid-template-columns:1fr;}
+  .badge-grid{grid-template-columns:1fr;}
+  .social-btns{grid-template-columns:1fr;}
+  .mg{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <div class="logo" onclick="goto('home')">
+    <div class="lm">S</div>Skill<em>Swap</em>
+  </div>
+  <div class="nav-links">
+    <button class="nl active" onclick="goto('home')" id="nl-home">Explore</button>
+    <button class="nl" onclick="goto('create')" id="nl-create">List a Skill</button>
+    <button class="nl" onclick="goto('chat')" id="nl-chat">Messages <span id="msgBadge" style="display:none;align-items:center;justify-content:center;background:var(--rose);color:#fff;border-radius:50%;width:17px;height:17px;font-size:.65rem;font-weight:700;margin-left:3px;">0</span></button>
+    <button class="nl" onclick="goto('profile')" id="nl-profile">My Profile</button>
+  </div>
+  <div class="nav-r">
+    <div class="pts-badge" id="navPts">🌟 0 pts</div>
+    <div id="navAuthButtons">
+      <button class="btn-o" onclick="goto('auth')">Sign In</button>
+      <button class="btn-f" onclick="goto('create')">＋ List a Skill</button>
+    </div>
+    <div id="navUserButton" style="display:none;">
+      <button class="nl" onclick="goto('profile')" id="nl-profile-btn" style="font-weight:600;">My Profile</button>
+      <button class="btn-f" onclick="goto('create')">＋ List a Skill</button>
+    </div>
+    <button class="hbg" id="hbg"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mob-menu" id="mobMenu">
+  <div class="mml" onclick="goto('home');closeMob()">🔍 Explore Skills</div>
+  <div class="mml" onclick="goto('create');closeMob()">＋ List a Skill</div>
+  <div class="mml" onclick="goto('chat');closeMob()">💬 Messages</div>
+  <div class="mml" onclick="goto('profile');closeMob()">👤 My Profile</div>
+  <div class="mob-menu-btns">
+    <button class="btn-o" style="flex:1" onclick="goto('auth');closeMob()">Sign In</button>
+    <button class="btn-f" style="flex:1" onclick="goto('auth');closeMob()">Sign Up</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: HOME / MARKETPLACE
+══════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>Student-Powered Exchange</div>
+      <h1>Learn from<br/><em>each other.</em></h1>
+      <p>Trade skills — design, code, notes, tutoring — with fellow students. No money needed. Points, barters, or micro-payments.</p>
+      <div class="ctas">
+        <button class="cta1" onclick="document.getElementById('searchInput').focus()">Explore Skills →</button>
+        <button class="cta2" onclick="goto('auth')">Join Free</button>
+      </div>
+    </div>
+    <div class="hero-r">
+      <div class="fc"><div class="fi" style="background:var(--rose-soft)">🎨</div><div class="ft">Figma Prototyping</div><div class="fb">Lavanya R. · B.Des Yr 3</div><span class="fp" style="background:var(--rose-soft);color:var(--rose)">30 pts</span></div>
+      <div class="fc"><div class="fi" style="background:var(--sky-soft)">💻</div><div class="ft">React Components</div><div class="fb">Arjun K. · B.Tech Yr 2</div><span class="fp" style="background:var(--sky-soft);color:var(--sky)">40 pts</span></div>
+      <div class="fc"><div class="fi" style="background:var(--sage-soft)">🎓</div><div class="ft">DSA Interview Prep</div><div class="fb">Nisha P. · B.Tech Yr 4</div><span class="fp" style="background:var(--sage-soft);color:var(--sage)">25 pts</span></div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="si"><span class="sn" id="s1">0</span><div class="sl">Active Students</div></div>
+    <div class="si"><span class="sn" id="s2">0</span><div class="sl">Skills Listed</div></div>
+    <div class="si"><span class="sn" id="s3">0</span><div class="sl">Exchanges Done</div></div>
+    <div class="si"><span class="sn" id="s4">0</span><div class="sl">Avg. Rating</div></div>
+  </div>
+
+  <div class="filter-zone">
+    <div class="sr">
+      <div class="sb">
+        <span class="si2">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search skills, students, topics…" autocomplete="off"/>
+      </div>
+      <button class="fb2">⚙ Filters</button>
+    </div>
+    <div class="cr" id="catRow"></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="rt">Showing <strong id="rCount">0</strong> skills</div>
+    <div class="tr">
+      <button class="sbt active" data-sort="newest">Newest</button>
+      <button class="sbt" data-sort="rating">Top Rated</button>
+      <button class="sbt" data-sort="points">Low Points</button>
+      <button class="vb active" id="gvb">⊞</button>
+      <button class="vb" id="lvb">☰</button>
+    </div>
+  </div>
+
+  <div class="gw">
+    <div id="cardGrid">
+      <div id="emptyState">
+        <div class="ei">🌿</div>
+        <h3>Nothing found</h3>
+        <p>Try a different search or category</p>
+      </div>
+    </div>
+  </div>
+</div><!-- /page-home -->
+
+<!-- ══════════════════════════════════
+     PAGE: PROFILE
+══════════════════════════════════ -->
+<div class="page" id="page-profile">
+  <div class="profile-hero">
+    <div class="ph-inner">
+      <div class="ph-av" id="p-av">LR</div>
+      <div class="ph-info">
+        <div class="ph-name" id="p-name">Lavanya Reddy</div>
+        <div class="ph-meta">
+          <span class="ph-tag" id="p-tag-major">🎓 B.Des · Year 3</span>
+          <span class="ph-tag" id="p-tag-clg">🏫 NIFT Bengaluru</span>
+          <span class="ph-tag" id="p-tag-rating">⭐ 4.9 rating</span>
+          <div class="ph-pts" id="p-tag-pts">🌟 240 pts</div>
+        </div>
+        <div class="ph-actions">
+          <button class="btn-f" style="border-radius:10px;padding:9px 20px;" onclick="editProfile()">Edit Profile</button>
+          <button class="btn-o" style="border-radius:10px;padding:9px 20px;margin-right:8px;" onclick="logout()">Sign Out</button>
+          <button class="btn-o" style="border-radius:10px;padding:9px 20px;" onclick="shareProfile()">Share Profile</button>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1200px;margin:0 auto;">
+      <div class="ph-tabs">
+        <button class="ph-tab active" onclick="switchPTab(this,'pt-listings')">My Listings</button>
+        <button class="ph-tab" onclick="switchPTab(this,'pt-reviews')">Reviews</button>
+        <button class="ph-tab" onclick="switchPTab(this,'pt-badges')">Badges</button>
+        <button class="ph-tab" onclick="switchPTab(this,'pt-history')">Exchange History</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-body">
+    <div class="profile-grid">
+      <!-- Sidebar -->
+      <div>
+        <div class="pcard" style="margin-bottom:16px;">
+          <div class="pcard-title">About</div>
+          <p id="p-about" style="font-size:.87rem;color:var(--sub);line-height:1.6;margin-bottom:14px;">UI/UX designer passionate about building beautiful, accessible interfaces.</p>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div id="p-loc" style="font-size:.82rem;color:var(--sub);display:flex;gap:8px;align-items:center;">📍 Bengaluru, Karnataka</div>
+            <div id="p-joined" style="font-size:.82rem;color:var(--sub);display:flex;gap:8px;align-items:center;">📅 Joined September 2023</div>
+            <div id="p-exchanges" style="font-size:.82rem;color:var(--sub);display:flex;gap:8px;align-items:center;">🔄 0 exchanges completed</div>
+          </div>
+        </div>
+        <div class="pcard" style="margin-bottom:16px;">
+          <div class="pcard-title">Skills I Offer</div>
+          <div class="skill-pill-list">
+            <span class="sk-pill" style="background:var(--rose-soft);color:var(--rose)">🎨 Figma</span>
+            <span class="sk-pill" style="background:var(--rose-soft);color:var(--rose)">✏️ Illustration</span>
+            <span class="sk-pill" style="background:var(--rose-soft);color:var(--rose)">🖼 Branding</span>
+            <span class="sk-pill" style="background:var(--rose-soft);color:var(--rose)">📱 UI Design</span>
+          </div>
+        </div>
+        <div class="pcard">
+          <div class="pcard-title">Skills I Want</div>
+          <div class="skill-pill-list">
+            <span class="sk-pill" style="background:var(--sky-soft);color:var(--sky)">💻 React</span>
+            <span class="sk-pill" style="background:var(--sky-soft);color:var(--sky)">📊 Data Analysis</span>
+            <span class="sk-pill" style="background:var(--sage-soft);color:var(--sage)">🎓 DSA</span>
+          </div>
+        </div>
+      </div>
+      <!-- Main content tabs -->
+      <div>
+        <div id="pt-listings">
+          <div class="section-title">My Listings</div>
+          <div class="section-sub">Skills you've listed for exchange</div>
+          <div class="my-listings-grid" id="p-listings-grid">
+            <!-- Dynamic listings here -->
+            <div class="ml-card ml-card-add" style="border:1.5px dashed var(--border2);background:var(--bg);justify-content:center;cursor:pointer;" onclick="goto('create')">
+              <div style="text-align:center;padding:8px;">
+                <div style="font-size:1.4rem;margin-bottom:6px;">＋</div>
+                <div style="font-size:.87rem;font-weight:600;color:var(--sub);">Add New Listing</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="pt-reviews" style="display:none;padding:20px;text-align:center;color:var(--muted)">No reviews yet.</div>
+        <div id="pt-badges" style="display:none;padding:20px;text-align:center;color:var(--muted)">No badges earned yet.</div>
+        <div id="pt-history" style="display:none;padding:20px;text-align:center;color:var(--muted)">No exchange history found.</div>
+        <div id="pt-reviews" style="display:none;">
+          <div class="section-title">Reviews</div>
+          <div class="section-sub">What others say about working with you</div>
+          <div style="margin-bottom:20px;">
+            <div style="display:flex;gap:20px;align-items:center;margin-bottom:18px;flex-wrap:wrap;">
+              <div style="text-align:center;"><div style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:900;color:var(--text);">4.9</div><div style="color:#f59e0b;font-size:1.1rem;">★★★★★</div><div style="font-size:.78rem;color:var(--muted);margin-top:3px;">39 reviews</div></div>
+              <div style="flex:1;min-width:160px;">
+                <div class="rating-bar"><span class="rb-label">5 stars</span><div class="rb-track"><div class="rb-fill" style="width:85%"></div></div><span class="rb-val">33</span></div>
+                <div class="rating-bar"><span class="rb-label">4 stars</span><div class="rb-track"><div class="rb-fill" style="width:10%"></div></div><span class="rb-val">4</span></div>
+                <div class="rating-bar"><span class="rb-label">3 stars</span><div class="rb-track"><div class="rb-fill" style="width:5%"></div></div><span class="rb-val">2</span></div>
+                <div class="rating-bar"><span class="rb-label">2 stars</span><div class="rb-track"><div class="rb-fill" style="width:0%"></div></div><span class="rb-val">0</span></div>
+                <div class="rating-bar"><span class="rb-label">1 star</span><div class="rb-track"><div class="rb-fill" style="width:0%"></div></div><span class="rb-val">0</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="review-card"><div class="rv-head"><span class="rv-name">Arjun K.</span><span class="rv-stars">★★★★★</span></div><div class="rv-text">"Lavanya delivered an incredibly polished Figma prototype in under 48 hours. The attention to detail was amazing — highly recommend!"</div></div>
+          <div class="review-card"><div class="rv-head"><span class="rv-name">Nisha P.</span><span class="rv-stars">★★★★★</span></div><div class="rv-text">"The brand identity she created for my side project was exactly what I envisioned. Professional, fast, and great to communicate with."</div></div>
+          <div class="review-card"><div class="rv-head"><span class="rv-name">Rahul V.</span><span class="rv-stars">★★★★☆</span></div><div class="rv-text">"Great work on the UI designs. Would have loved a slightly faster turnaround but the quality was top-notch."</div></div>
+        </div>
+        <div id="pt-badges" style="display:none;">
+          <div class="section-title">Badges</div>
+          <div class="section-sub">Earned through great exchanges</div>
+          <div class="badge-grid">
+            <div class="badge"><div class="badge-icon">🏆</div><div class="badge-name">Top Rated</div><div class="badge-desc">Maintained 4.8+ rating</div></div>
+            <div class="badge"><div class="badge-icon">⚡</div><div class="badge-name">Fast Responder</div><div class="badge-desc">Replies within 1 hour</div></div>
+            <div class="badge"><div class="badge-icon">🔥</div><div class="badge-name">10 Exchanges</div><div class="badge-desc">Completed 10 swaps</div></div>
+            <div class="badge"><div class="badge-icon">🎨</div><div class="badge-name">Design Expert</div><div class="badge-desc">5+ design listings</div></div>
+            <div class="badge" style="opacity:.4;"><div class="badge-icon">💫</div><div class="badge-name">20 Exchanges</div><div class="badge-desc">8 more to unlock</div></div>
+            <div class="badge" style="opacity:.4;"><div class="badge-icon">👑</div><div class="badge-name">Campus Legend</div><div class="badge-desc">Top 10 on leaderboard</div></div>
+          </div>
+        </div>
+        <div id="pt-history" style="display:none;">
+          <div class="section-title">Exchange History</div>
+          <div class="section-sub">Your completed and pending exchanges</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+              <div style="width:40px;height:40px;border-radius:50%;background:var(--sky-soft);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:var(--sky);flex-shrink:0;">AK</div>
+              <div style="flex:1;"><div style="font-size:.9rem;font-weight:600;margin-bottom:3px;">Figma Prototyping ↔ React Components</div><div style="font-size:.78rem;color:var(--muted);">with Arjun K. · Feb 14 2025</div></div>
+              <span style="padding:5px 12px;border-radius:20px;background:var(--sage-soft);color:var(--sage);font-size:.76rem;font-weight:600;">Completed</span>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+              <div style="width:40px;height:40px;border-radius:50%;background:var(--sage-soft);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:var(--sage);flex-shrink:0;">NP</div>
+              <div style="flex:1;"><div style="font-size:.9rem;font-weight:600;margin-bottom:3px;">Logo Design ↔ DSA Tutoring</div><div style="font-size:.78rem;color:var(--muted);">with Nisha P. · Mar 2 2025</div></div>
+              <span style="padding:5px 12px;border-radius:20px;background:var(--amber-soft);color:var(--amber);font-size:.76rem;font-weight:600;">In Progress</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /page-profile -->
+
+<!-- ══════════════════════════════════
+     PAGE: CREATE LISTING
+══════════════════════════════════ -->
+<div class="page" id="page-create">
+  <div class="create-wrap">
+    <div class="create-header">
+      <h2>List a New Skill</h2>
+      <p>Share what you're good at and start earning points from fellow students.</p>
+    </div>
+
+    <div class="form-section">
+      <div class="fs-title"><span class="fs-num">1</span>Basic Details</div>
+      <div class="frow">
+        <label>Skill Title *</label>
+        <input class="finput" id="f-title" placeholder="e.g. Figma UI Prototyping" maxlength="60" oninput="updatePreview();updateChar('f-title','tc-title',60)"/>
+        <div class="char-count" id="tc-title">0 / 60</div>
+      </div>
+      <div class="frow">
+        <label>Category *</label>
+        <select class="fselect" id="f-cat" onchange="updatePreview()">
+          <option value="">Select a category</option>
+          <option value="design">🎨 Design</option>
+          <option value="coding">💻 Coding</option>
+          <option value="notes">📝 Notes</option>
+          <option value="tutor">🎓 Tutoring</option>
+          <option value="video">🎬 Video Editing</option>
+          <option value="project">🚀 Project Help</option>
+        </select>
+      </div>
+      <div class="frow">
+        <label>Description *</label>
+        <textarea class="ftextarea" id="f-desc" placeholder="Describe what you offer, your experience, deliverables, turnaround time…" maxlength="400" oninput="updatePreview();updateChar('f-desc','tc-desc',400)"></textarea>
+        <div class="char-count" id="tc-desc">0 / 400</div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="fs-title"><span class="fs-num">2</span>Tags & Expertise</div>
+      <div class="frow">
+        <label>Tags <span style="color:var(--muted);font-weight:400">(press Enter or comma to add)</span></label>
+        <div class="tag-input-wrap" id="tagWrap" onclick="document.getElementById('tagRaw').focus()">
+          <input id="tagRaw" placeholder="Add a tag…"/>
+        </div>
+      </div>
+      <div class="frow">
+        <label>Your Experience Level</label>
+        <select class="fselect" id="f-level">
+          <option>Beginner (learning as I go)</option>
+          <option selected>Intermediate (solid foundation)</option>
+          <option>Advanced (confident & fast)</option>
+          <option>Expert (professional level)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="fs-title"><span class="fs-num">3</span>Exchange Terms</div>
+      <div class="frow">
+        <label>Preferred Exchange Type</label>
+        <div class="exchange-opts">
+          <div class="exopt active" onclick="selectEx(this)"><div class="eo-icon">⭐</div><div class="eo-label">Points</div></div>
+          <div class="exopt" onclick="selectEx(this)"><div class="eo-icon">🤝</div><div class="eo-label">Barter</div></div>
+          <div class="exopt" onclick="selectEx(this)"><div class="eo-icon">💸</div><div class="eo-label">Payment</div></div>
+        </div>
+      </div>
+      <div class="frow frow-2">
+        <div>
+          <label>Point Value</label>
+          <input class="finput" id="f-pts" type="number" placeholder="e.g. 30" min="5" max="200" oninput="updatePreview()"/>
+        </div>
+        <div>
+          <label>Delivery Time</label>
+          <select class="fselect" id="f-time">
+            <option>Within 24 hours</option>
+            <option selected>1–2 days</option>
+            <option>3–5 days</option>
+            <option>1 week</option>
+            <option>Flexible</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE PREVIEW -->
+    <div class="preview-card">
+      <div class="pc-label">✦ Live Preview</div>
+      <div id="previewCard" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+        <div id="pbar" style="height:4px;background:linear-gradient(90deg,var(--rose),var(--amber));"></div>
+        <div style="padding:16px;">
+          <div style="font-size:.73rem;color:var(--muted);margin-bottom:7px;" id="p-cat">🎨 Design</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:6px;" id="p-title">Your skill title</div>
+          <div style="font-size:.83rem;color:var(--sub);line-height:1.5;margin-bottom:10px;" id="p-desc">Your description will appear here…</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div id="p-av-small" style="width:26px;height:26px;border-radius:50%;background:var(--rose-soft);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--rose);">LR</div>
+              <div><div id="p-name-small" style="font-size:.82rem;font-weight:600;">Lavanya R.</div><div id="p-dept-small" style="font-size:.7rem;color:var(--muted);">B.Des · Yr 3</div></div>
+            </div>
+            <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--rose);" id="p-pts">30 pts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-bar">
+      <button class="sbtn-ghost" onclick="goto('home')">Cancel</button>
+      <button class="sbtn-main" onclick="submitListing()">Publish Listing ↗</button>
+    </div>
+  </div>
+</div><!-- /page-create -->
+
+<!-- ══════════════════════════════════
+     PAGE: CHAT
+══════════════════════════════════ -->
+<div class="page" id="page-chat">
+  <div class="chat-wrap">
+    <!-- Sidebar -->
+    <div class="chat-sidebar" id="chatSidebar">
+      <div class="cs-header">
+        <h3>Messages</h3>
+        <div class="cs-search"><span class="si3">🔍</span><input type="text" placeholder="Search conversations…"/></div>
+      </div>
+      <div class="conv-list" id="convList"></div>
+    </div>
+    <!-- Chat Main -->
+    <div class="chat-main">
+      <div class="cm-header" id="cmHeader">
+        <div class="cm-av" id="cmAv" style="background:var(--sky-soft);color:var(--sky)">AK</div>
+        <div>
+          <div class="cm-name" id="cmName">Select User</div>
+          <div class="cm-status" id="cmStatus">Offline</div>
+        </div>
+        <div class="cm-actions" id="chatActions" style="display:none;">
+          <button class="cm-btn" onclick="openRatingModal()">⭐ Rate User</button>
+          <button class="cm-btn" id="btnExchangeDetails" onclick="showExchangeDetails()">Exchange Details</button>
+          <button class="cm-btn primary" id="btnAcceptExchange" onclick="acceptExchange()">Accept Exchange</button>
+        </div>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="msg-input-bar">
+        <div class="msg-input-wrap">
+          <button class="attach-btn" onclick="showToast('📎 Attachment coming soon')">📎</button>
+          <textarea id="msgInput" placeholder="Type a message…" rows="1"></textarea>
+        </div>
+        <button class="send-btn" onclick="sendMsg()">➤</button>
+      </div>
+    </div>
+  </div>
+</div><!-- /page-chat -->
+
+<!-- ══════════════════════════════════
+     PAGE: AUTH
+══════════════════════════════════ -->
+<div class="page" id="page-auth">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-top">
+        <div class="auth-logo">
+          <div class="lm">S</div>Skill<em>Swap</em>
+        </div>
+        <div class="auth-sub">The student skill exchange community</div>
+        <div class="auth-tabs">
+          <button class="at active" onclick="switchAuth('signin',this)">Sign In</button>
+          <button class="at" onclick="switchAuth('signup',this)">Sign Up</button>
+        </div>
+      </div>
+
+      <!-- SIGN IN -->
+      <div id="auth-signin" class="auth-form">
+        <div class="auth-frow"><label>Email / Student ID</label><input class="auth-input" type="email" placeholder="you@college.edu"/></div>
+        <div class="auth-frow"><label>Password</label><input class="auth-input" type="password" placeholder="••••••••"/></div>
+        <button class="auth-btn" id="loginBtn">Sign In →</button>
+        <div class="auth-divider">or continue with</div>
+        <div class="social-btns">
+          <button class="social-btn" onclick="showToast('🎓 College SSO integration coming soon')">🎓 College SSO</button>
+          <button class="social-btn" onclick="showToast('📧 Google Sign-In coming soon')">📧 Google</button>
+        </div>
+      </div>
+
+      <!-- SIGN UP (hidden) -->
+      <div id="auth-signup" class="auth-form" style="display:none;">
+        <div class="frow-2" style="gap:12px;margin-bottom:14px;">
+          <div class="auth-frow" style="margin:0;"><label>First Name</label><input class="auth-input" type="text" placeholder="Lavanya"/></div>
+          <div class="auth-frow" style="margin:0;"><label>Last Name</label><input class="auth-input" type="text" placeholder="Reddy"/></div>
+        </div>
+        <div class="auth-frow"><label>College Email</label><input class="auth-input" type="email" placeholder="you@college.edu"/></div>
+        <div class="auth-frow"><label>Department & Year</label>
+          <select class="auth-input" style="appearance:none;">
+            <option>B.Tech · Year 1</option><option>B.Tech · Year 2</option><option>B.Tech · Year 3</option><option>B.Tech · Year 4</option>
+            <option>B.Des · Year 1</option><option selected>B.Des · Year 3</option><option>M.Tech · Year 1</option><option>BBA · Year 2</option>
+          </select>
+        </div>
+        <div class="auth-frow"><label>Create Password</label><input class="auth-input" type="password" id="signupPassword" placeholder="••••••••"/></div>
+        <div class="auth-frow">
+          <label>Skills I can offer</label>
+          <div class="interest-chips">
+            <span class="ic active" onclick="this.classList.toggle('active')">🎨 Design</span>
+            <span class="ic" onclick="this.classList.toggle('active')">💻 Coding</span>
+            <span class="ic" onclick="this.classList.toggle('active')">📝 Notes</span>
+            <span class="ic" onclick="this.classList.toggle('active')">🎓 Tutoring</span>
+            <span class="ic" onclick="this.classList.toggle('active')">🎬 Video</span>
+            <span class="ic" onclick="this.classList.toggle('active')">🚀 Projects</span>
+          </div>
+        </div>
+        <button class="auth-btn" id="signupBtn">Create Account →</button>
+      </div>
+      <div class="auth-footer" id="auth-foot-signin">Don't have an account? <a onclick="switchAuth('signup',document.querySelectorAll('.at')[1])">Sign up free</a></div>
+      <div class="auth-footer" id="auth-foot-signup" style="display:none;">Already have an account? <a onclick="switchAuth('signin',document.querySelectorAll('.at')[0])">Sign in</a></div>
+    </div>
+  </div>
+</div><!-- /page-auth -->
+
+<!-- DETAIL MODAL -->
+<div id="modal">
+  <div class="mbox">
+    <div class="mb" id="mBar"></div>
+    <button class="mx" id="mClose">✕</button>
+    <div class="mc">
+      <div class="mcat" id="mCat"></div>
+      <div class="mtitle" id="mTitle"></div>
+      <div class="mdesc" id="mDesc"></div>
+      <div class="mg">
+        <div class="ms"><div class="msl">Exchange</div><div class="msv" id="mPrice"></div></div>
+        <div class="ms"><div class="msl">Rating</div><div class="msv" id="mRating"></div></div>
+        <div class="ms"><div class="msl">Offered By</div><div class="msv" id="mStudent"></div></div>
+        <div class="ms"><div class="msl">Department</div><div class="msv" id="mDept"></div></div>
+      </div>
+      <div class="ma">
+        <button class="mb1" id="mReq">Request Exchange ↗</button>
+        <button class="mb2" id="mChat2">💬 Chat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RATING MODAL -->
+<div id="ratingModal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:20px;">
+  <div class="mbox" style="padding:28px; max-width:400px; background:white; border-radius:20px;">
+    <h3 class="mtitle" style="margin-bottom:15px;">Rate this Exchange</h3>
+    <div class="frow" style="margin-bottom:15px;">
+      <label style="display:block; margin-bottom:5px;">Score (1-5)</label>
+      <input type="number" id="ratingScore" min="1" max="5" class="finput" value="5" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:10px;">
+    </div>
+    <div class="frow" style="margin-bottom:15px;">
+      <label style="display:block; margin-bottom:5px;">Comment</label>
+      <textarea id="ratingComment" class="ftextarea" placeholder="How was the experience?" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:10px; height:80px;"></textarea>
+    </div>
+    <div class="ma" style="display:flex; gap:10px;">
+      <button class="mb1" onclick="submitRating()" style="flex:1; padding:12px; background:var(--rose); color:white; border:none; border-radius:10px; cursor:pointer;">Submit</button>
+      <button class="mb2" onclick="document.getElementById('ratingModal').style.display='none'" style="flex:1; padding:12px; border:1px solid #ccc; border-radius:10px; cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+const API_URL = 'http://localhost:5000/api';
+let TOKEN = localStorage.getItem('token');
+let USER = JSON.parse(localStorage.getItem('user'));
+let currentPage = 'home';
+let activeCat = 'all';
+let sortMode = 'newest';
+let searchQ = '';
+let activeConv = null;
+let SKILLS = [];
+const CONVOS = [];
+const MESSAGES = [];
+
+// ─── DATA ───
+const CATS=[
+  {id:'all',label:'All Skills',em:'✦'},
+  {id:'Design',label:'Design',em:'🎨'},
+  {id:'Coding',label:'Coding',em:'💻'},
+  {id:'Notes',label:'Notes',em:'📝'},
+  {id:'Tutoring',label:'Tutoring',em:'🎓'},
+  {id:'Video Editing',label:'Video Editing',em:'🎬'},
+  {id:'Project Help',label:'Project Help',em:'🚀'},
+];
+const PAL={
+  design: {bar:'linear-gradient(90deg,#e8604c,#c87941)',cb:'var(--rose-soft)',cc:'var(--rose)',ab:'var(--rose-soft)',ac:'var(--rose)',pc:'var(--rose)'},
+  coding: {bar:'linear-gradient(90deg,#3b7abf,#5b5ea6)',cb:'var(--sky-soft)',cc:'var(--sky)',ab:'var(--sky-soft)',ac:'var(--sky)',pc:'var(--sky)'},
+  notes:  {bar:'linear-gradient(90deg,#c87941,#e8a020)',cb:'var(--amber-soft)',cc:'var(--amber)',ab:'var(--amber-soft)',ac:'var(--amber)',pc:'var(--amber)'},
+  tutoring:  {bar:'linear-gradient(90deg,#4a7c6f,#5aaa8e)',cb:'var(--sage-soft)',cc:'var(--sage)',ab:'var(--sage-soft)',ac:'var(--sage)',pc:'var(--sage)'},
+  videoediting:  {bar:'linear-gradient(90deg,#8b4f8e,#c84fe8)',cb:'var(--plum-soft)',cc:'var(--plum)',ab:'var(--plum-soft)',ac:'var(--plum)',pc:'var(--plum)'},
+  projecthelp:{bar:'linear-gradient(90deg,#5b5ea6,#7b5ea6)',cb:'var(--indigo-soft)',cc:'var(--indigo)',ab:'var(--indigo-soft)',ac:'var(--indigo)',pc:'var(--indigo)'},
+};
+// SKILLS array moved to top
+
+async function fetchSkills() {
+  try {
+    const res = await fetch(`${API_URL}/skills?category=${activeCat === 'all' ? '' : activeCat}&search=${searchQ}`);
+    if(!res.ok) throw new Error('Failed to fetch skills');
+    SKILLS = await res.json();
+    renderCards();
+    if(USER) renderProfile();
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+}
+
+// ─── PAGE NAVIGATION ───
+function goto(page) {
+  if((page==='profile' || page==='create') && !TOKEN) {
+    showToast('🔑 Please sign in to access this page');
+    goto('auth');
+    return;
+  }
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const targetPage = document.getElementById('page-'+page);
+  if(targetPage) targetPage.classList.add('active');
+  
+  document.querySelectorAll('.nl').forEach(b=>b.classList.remove('active'));
+  const nb = document.getElementById('nl-'+page);
+  if(nb) nb.classList.add('active');
+  
+  currentPage = page;
+  window.scrollTo(0,0);
+  if(page==='chat') {
+    if(activeConv) {
+      setupChatHeader(activeConv);
+      fetchMessages(activeConv.id);
+    }
+    fetchConversations();
+  }
+  if(page==='home') fetchSkills();
+  if(page==='profile') renderProfile();
+}
+
+function setupChatHeader(c) {
+  document.getElementById('cmAv').style.background=c.ab;
+  document.getElementById('cmAv').style.color=c.ac;
+  document.getElementById('cmAv').textContent=c.init;
+  document.getElementById('cmName').textContent=c.name;
+  document.getElementById('cmStatus').textContent = '🟢 Online · Active';
+  document.getElementById('chatActions').style.display = 'flex';
+  
+  // Only show Accept button if NOT chatting with self (and it was the requester)
+  const acceptBtn = document.getElementById('btnAcceptExchange');
+  if(acceptBtn) {
+    if(USER && c.id === USER._id) {
+       acceptBtn.style.display = 'none';
+    } else {
+       acceptBtn.style.display = 'block';
+       if(USER && USER.acceptedExchanges && USER.acceptedExchanges.includes(c.room)) {
+         acceptBtn.textContent = 'Exchange Completed';
+         acceptBtn.disabled = true;
+         acceptBtn.style.opacity = '0.6';
+       } else {
+         acceptBtn.textContent = 'Accept Exchange';
+         acceptBtn.disabled = false;
+         acceptBtn.style.opacity = '1';
+       }
+    }
+  }
+}
+
+// ─── HAMBURGER ───
+const hbg=document.getElementById('hbg');
+const mobMenu=document.getElementById('mobMenu');
+function closeMob(){hbg.classList.remove('open');mobMenu.classList.remove('open');}
+hbg.addEventListener('click',e=>{e.stopPropagation();hbg.classList.toggle('open');mobMenu.classList.toggle('open');});
+document.addEventListener('click',e=>{if(!hbg.contains(e.target)&&!mobMenu.contains(e.target))closeMob();});
+
+// ─── TOAST ───
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ─── HOME / MARKETPLACE ───
+const catRow=document.getElementById('catRow');
+CATS.forEach(c=>{
+  const p=document.createElement('button');
+  p.className='cp'+(c.id==='all'?' active':'');
+  p.dataset.cat=c.id;
+  p.innerHTML=`<span>${c.em}</span>${c.label}`;
+  p.addEventListener('click',()=>{activeCat=c.id;document.querySelectorAll('.cp').forEach(x=>x.classList.remove('active'));p.classList.add('active');fetchSkills();});
+  catRow.appendChild(p);
+});
+document.getElementById('searchInput').addEventListener('input',e=>{searchQ=e.target.value.toLowerCase();fetchSkills();});
+
+function renderCards(){
+  let data = [...SKILLS];
+  if(sortMode==='rating')data=[...data].sort((a,b)=>b.provider.avgRating-a.provider.avgRating);
+  if(sortMode==='points')data=[...data].sort((a,b)=>a.points-b.points);
+  
+  const grid=document.getElementById('cardGrid');
+  const empty=document.getElementById('emptyState');
+  document.getElementById('rCount').textContent=data.length;
+  Array.from(grid.children).forEach(c=>{if(c.id!=='emptyState')c.remove();});
+  if(!data.length){empty.style.display='block';return;}
+  empty.style.display='none';
+  data.forEach((s,i)=>{
+    const p=PAL[s.category.toLowerCase().replace(' ','')]; 
+    const cat=CATS.find(c=>c.label.includes(s.category));
+    const init=s.provider.name.split(' ').map(w=>w[0]).join('');
+    const card=document.createElement('div');
+    card.className='card';card.style.animationDelay=`${i*45}ms`;
+    card.innerHTML=`<div class="cbar" style="background:${p?.bar || 'var(--rose)'}"></div>
+    <div class="cb">
+      <div class="ch">
+        <span class="cchip" style="background:${p?.cb || 'var(--rose-soft)'};color:${p?.cc || 'var(--rose)'}">${cat?.em || '✦'} ${s.category}</span>
+        <span class="rrow"><span class="st">★</span>${s.provider.avgRating || '0.0'}</span>
+      </div>
+      <div class="ctitle">${s.title}</div>
+      <div class="cdesc">${s.description.length>110?s.description.slice(0,110)+'…':s.description}</div>
+      <div class="ctags">${s.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="cf">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="av" style="background:${p?.ab || 'var(--rose-soft)'};color:${p?.ac || 'var(--rose)'}">${init}</div>
+          <div><div class="sname">${s.provider.name}</div><div class="sdept">${s.provider.department} · Yr ${s.provider.year}</div></div>
+        </div>
+        <div><div class="ptag" style="color:${p?.pc || 'var(--rose)'}">${s.points || 0} pts</div><div class="psub">${s.exchangeMethod}</div></div>
+      </div>
+    </div>`;
+    card.addEventListener('click',()=>openModal(s));
+    grid.appendChild(card);
+  });
+}
+
+// ─── MODAL ───
+const modal=document.getElementById('modal');
+document.getElementById('mClose').addEventListener('click',()=>modal.classList.remove('open'));
+modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('open');});
+document.getElementById('mReq').addEventListener('click',()=>{modal.classList.remove('open');showToast('🎉 Exchange request sent!');});
+document.getElementById('mChat2').addEventListener('click',()=>{modal.classList.remove('open');goto('chat');});
+function openModal(s){
+  const p=PAL[s.category.toLowerCase().replace(' ','')];
+  document.getElementById('mBar').style.background=p?.bar || 'var(--rose)';
+  document.getElementById('mCat').textContent=s.category;
+  document.getElementById('mTitle').textContent=s.title;
+  document.getElementById('mDesc').textContent=s.description;
+  document.getElementById('mPrice').textContent=(s.points || 0) + ' pts';
+  document.getElementById('mRating').innerHTML=`⭐ ${s.provider.avgRating || '0.0'} <span style="font-size:.78rem;font-weight:400;color:var(--muted)">(${s.provider.numRatings || 0})</span>`;
+  document.getElementById('mStudent').textContent=s.provider.name;
+  document.getElementById('mDept').textContent=`${s.provider.department} · Year ${s.provider.year}`;
+  
+  const reqBtn = document.getElementById('mReq');
+  const chatBtnModal = document.getElementById('mChat2');
+  
+  // Prevent self-interaction
+  if(USER && s.provider._id === USER._id) {
+    reqBtn.style.display = 'none';
+    chatBtnModal.style.display = 'none';
+    // Show a small note that it's your own
+    document.getElementById('mDesc').insertAdjacentHTML('afterend', '<div id="mSelfNote" style="font-size:.8rem;color:var(--rose);margin-top:10px;font-weight:600;">You listed this skill!</div>');
+  } else {
+    reqBtn.style.display = 'block';
+    chatBtnModal.style.display = 'flex';
+    const note = document.getElementById('mSelfNote'); if(note) note.remove();
+  }
+
+  // Update request button to deep link to chat
+  reqBtn.onclick = () => {
+    modal.classList.remove('open');
+    if(!TOKEN) { showToast('🔑 Please sign in first'); goto('auth'); return; }
+    
+    // Create or select conversation
+    const room = [USER._id, s.provider._id].sort().join('_');
+    activeConv = {
+      id: s.provider._id,
+      name: s.provider.name,
+      room: room,
+      init: s.provider.name.split(' ').map(n=>n[0]).join(''),
+      ab: 'var(--sky-soft)',
+      ac: 'var(--sky)',
+      last: `Interested in: ${s.title}`
+    };
+    
+    // Send an automated initial message to establish the conversation in the DB
+    const initialMsg = {
+      sender: USER._id,
+      receiver: s.provider._id,
+      text: `👋 Hi! I'm interested in your skill: "${s.title}". Let's exchange!`,
+      conversationId: room
+    };
+    socket.emit('sendMessage', initialMsg);
+    
+    goto('chat');
+    showToast('💬 Starting conversation...');
+  };
+  
+  // Update Chat button to deep link to chat
+  chatBtnModal.onclick = () => {
+    modal.classList.remove('open');
+    if(!TOKEN) { showToast('🔑 Please sign in first'); goto('auth'); return; }
+    
+    const room = [USER._id, s.provider._id].sort().join('_');
+    activeConv = {
+      id: s.provider._id,
+      name: s.provider.name,
+      room: room,
+      init: s.provider.name.split(' ').map(n=>n[0]).join(''),
+      ab: 'var(--sky-soft)',
+      ac: 'var(--sky)',
+      last: 'Starting chat...'
+    };
+    
+    const initialMsg = {
+      sender: USER._id,
+      receiver: s.provider._id,
+      text: `Hi ${s.provider.name.split(' ')[0]}, I saw your "${s.title}" listing!`,
+      conversationId: room
+    };
+    socket.emit('sendMessage', initialMsg);
+    
+    goto('chat');
+  };
+  modal.classList.add('open');
+}
+
+// ─── PROFILE TABS ───
+function switchPTab(btn,tabId){
+  document.querySelectorAll('.ph-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['pt-listings','pt-reviews','pt-badges','pt-history'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  document.getElementById(tabId).style.display='block';
+}
+
+// ─── CREATE LISTING ───
+const formTags=[];
+function updateChar(inputId,countId,max){const v=document.getElementById(inputId).value.length;document.getElementById(countId).textContent=`${v} / ${max}`;}
+const tagRaw=document.getElementById('tagRaw');
+tagRaw.addEventListener('keydown',e=>{
+  if((e.key===','||e.key==='Enter')&&tagRaw.value.trim()){
+    e.preventDefault();
+    const val=tagRaw.value.replace(',','').trim();
+    if(val&&formTags.length<6){formTags.push(val);renderTags();tagRaw.value='';}
+  }
+  if(e.key==='Backspace'&&!tagRaw.value&&formTags.length){formTags.pop();renderTags();}
+});
+function renderTags(){
+  const wrap=document.getElementById('tagWrap');
+  wrap.querySelectorAll('.tag-chip').forEach(c=>c.remove());
+  formTags.forEach((t,i)=>{
+    const chip=document.createElement('div');chip.className='tag-chip';
+    chip.innerHTML=`${t}<button onclick="formTags.splice(${i},1);renderTags()">×</button>`;
+    wrap.insertBefore(chip,tagRaw);
+  });
+}
+function selectEx(el){document.querySelectorAll('.exopt').forEach(e=>e.classList.remove('active'));el.classList.add('active');}
+function updatePreview(){
+  const t=document.getElementById('f-title').value||'Your skill title';
+  const d=document.getElementById('f-desc').value||'Your description will appear here…';
+  const pts=document.getElementById('f-pts').value;
+  const cat=document.getElementById('f-cat').value;
+  document.getElementById('p-title').textContent=t.slice(0,50);
+  document.getElementById('p-desc').textContent=d.slice(0,120)+(d.length>120?'…':'');
+  document.getElementById('p-pts').textContent=pts?(pts+' pts'):'30 pts';
+  const catData=CATS.find(c=>c.id===cat);
+  if(catData){document.getElementById('p-cat').textContent=catData.em+' '+catData.label;}
+  
+  if(USER) {
+    const pName = document.getElementById('p-name-small');
+    const pDept = document.getElementById('p-dept-small');
+    const pAv = document.getElementById('p-av-small');
+    if(pName) pName.textContent = USER.name;
+    if(pDept) pDept.textContent = `${USER.department} · Yr ${USER.year}`;
+    if(pAv) pAv.textContent = USER.name.split(' ').map(n=>n[0]).join('');
+  }
+}
+async function submitListing(){
+  const title=document.getElementById('f-title').value;
+  const description=document.getElementById('f-desc').value;
+  const categoryElem = document.getElementById('f-cat');
+  const categoryText = categoryElem.options[categoryElem.selectedIndex].text;
+  const category = categoryText.includes(' ') ? categoryText.split(' ')[1] : categoryText;
+  const points=document.getElementById('f-pts').value;
+  const deliveryTime=document.getElementById('f-time').value;
+  const exchangeMethod=document.querySelector('.exopt.active .eo-label').textContent;
+
+  if(!title || !description || !category){showToast('⚠️ Please fill in all required fields');return;}
+
+  try {
+    const res = await fetch(`${API_URL}/skills`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-auth-token': TOKEN
+      },
+      body: JSON.stringify({ title, description, category, points, deliveryTime, exchangeMethod, tags: formTags })
+    });
+    if(!res.ok) {
+      const errData = await res.json().catch(()=>({msg:'Failed to list skill.'}));
+      throw new Error(errData.msg || 'Failed to list skill.');
+    }
+    
+    showToast('🎉 Skill listed successfully!');
+    setTimeout(()=>goto('home'), 1200);
+
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+}
+
+// ─── AUTH ───
+function switchAuth(tab,btn){
+  document.querySelectorAll('.at').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('auth-signin').style.display=tab==='signin'?'block':'none';
+  document.getElementById('auth-signup').style.display=tab==='signup'?'block':'none';
+  document.getElementById('auth-foot-signin').style.display=tab==='signin'?'block':'none';
+  document.getElementById('auth-foot-signup').style.display=tab==='signup'?'block':'none';
+}
+
+async function login(){
+  const inputs = document.querySelectorAll('#auth-signin .auth-input');
+  const email = inputs[0].value;
+  const password = inputs[1].value;
+  try {
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    
+    if(!res.ok) {
+      const errData = await res.json().catch(()=>({msg:'Login failed'}));
+      throw new Error(errData.msg || 'Login failed');
+    }
+    
+    const data = await res.json();
+    TOKEN = data.token;
+    localStorage.setItem('token', TOKEN);
+    const userRes = await fetch(`${API_URL}/auth/me`, {
+      headers: { 'x-auth-token': TOKEN }
+    });
+    USER = await userRes.json();
+    localStorage.setItem('user', JSON.stringify(USER));
+    
+    updateAuthUI();
+    renderProfile();
+    fetchConversations();
+    showToast(`👋 Welcome back, ${USER.name}!`);
+    setTimeout(()=>goto('home'), 1000);
+    
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+}
+
+function updateAuthUI() {
+  const norm = document.getElementById('navAuthButtons');
+  const user = document.getElementById('navUserButton');
+  const pts = document.getElementById('navPts');
+  if(norm) norm.style.display = (TOKEN && USER) ? 'none' : 'flex';
+  if(user) user.style.display = (TOKEN && USER) ? 'flex' : 'none';
+  if(pts) pts.textContent = (TOKEN && USER) ? `🌟 ${USER.points || 0} pts` : '🌟 0 pts';
+}
+
+function renderProfile() {
+  if(!USER) return;
+  document.getElementById('p-av').textContent = USER.name.split(' ').map(n=>n[0]).join('');
+  document.getElementById('p-name').textContent = USER.name;
+  document.getElementById('p-tag-major').textContent = `🎓 ${USER.department} · Year ${USER.year}`;
+  document.getElementById('p-tag-pts').textContent = `🌟 ${USER.points} pts`;
+  document.getElementById('p-tag-rating').textContent = `⭐ ${USER.avgRating || '0.0'} rating`;
+  document.getElementById('p-exchanges').textContent = `🔄 ${USER.exchangesCompleted || 0} exchanges completed`;
+  
+  const mySkills = SKILLS.filter(s => s.provider && s.provider._id === USER._id);
+  const grid = document.getElementById('p-listings-grid');
+  grid.querySelectorAll('.ml-card:not(.add-new)').forEach(c=>c.remove());
+  
+  mySkills.forEach(s => {
+    const p = PAL[s.category.toLowerCase().replace(' ','')];
+    const cat = CATS.find(c=>c.label.includes(s.category));
+    const card = document.createElement('div');
+    card.className = 'ml-card';
+    card.innerHTML = `
+      <div class="ml-icon" style="background:${p?.cb || 'var(--rose-soft)'}">${cat?.em || '✦'}</div>
+      <div class="ml-info">
+        <div class="ml-title">${s.title}</div>
+        <div class="ml-meta">${s.points} pts · ⭐ ${s.provider.avgRating || '0.0'} · ${s.category}</div>
+      </div>
+      <div class="ml-actions">
+        <button class="ml-btn ml-edit">Edit</button>
+        <button class="ml-btn ml-del" onclick="deleteSkill('${s._id}')">Delete</button>
+      </div>`;
+    grid.prepend(card);
+  });
+}
+
+function editProfile() {
+  showToast('✏️ Edit Profile feature coming soon!');
+}
+
+function shareProfile() {
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('🔗 Profile link copied to clipboard!');
+  });
+}
+
+function logout() {
+  localStorage.clear();
+  TOKEN = null;
+  USER = null;
+  updateAuthUI();
+  showToast('👋 Signed out successfully');
+  goto('home');
+}
+
+async function deleteSkill(id) {
+  if(!confirm('Are you sure you want to delete this listing?')) return;
+  try {
+    const res = await fetch(`${API_URL}/skills/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-auth-token': TOKEN }
+    });
+    if(res.ok) {
+      showToast('🗑️ Listing deleted');
+      fetchSkills();
+    } else {
+      showToast('❌ Failed to delete');
+    }
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+}
+
+async function signup(){
+  const inputs = document.querySelectorAll('#auth-signup .auth-input');
+  const name = inputs[0].value + ' ' + inputs[1].value;
+  const email = inputs[2].value;
+  const deptYear = inputs[3].value.split(' · ');
+  const department = deptYear[0];
+  const year = deptYear[1];
+  const password = document.getElementById('signupPassword').value;
+  if(!password) { showToast('⚠️ Please enter a password'); return; }
+
+  // Get skills offered
+  const skillsOffer = Array.from(document.querySelectorAll('#auth-signup .interest-chips .ic.active')).map(el => el.textContent.split(' ')[1] || el.textContent);
+
+  try {
+    const res = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, department, year, skillsOffer })
+    });
+    
+    if(!res.ok) {
+      const errData = await res.json().catch(()=>({msg:'Signup failed'}));
+      throw new Error(errData.msg || 'Signup failed');
+    }
+    
+    showToast('🎉 Account created! Please log in.');
+    switchAuth('signin', document.querySelectorAll('.at')[0]);
+    
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+}
+
+function openRatingModal() {
+  if(!activeConv) return;
+  document.getElementById('ratingModal').style.display = 'flex';
+}
+
+async function submitRating() {
+  const score = document.getElementById('ratingScore').value;
+  const comment = document.getElementById('ratingComment').value;
+  if(!activeConv || !USER) return;
+
+  try {
+    const res = await fetch(`${API_URL}/ratings`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-auth-token': TOKEN
+      },
+      body: JSON.stringify({ ratee: activeConv.id, score, comment })
+    });
+    
+    if(!res.ok) {
+      const errData = await res.json().catch(()=>({msg:'Failed to submit rating'}));
+      throw new Error(errData.msg || 'Failed to submit rating');
+    }
+    
+    showToast('⭐ Rating submitted!');
+    document.getElementById('ratingModal').style.display = 'none';
+    fetchSkills(); // Refresh to see updated ratings
+    
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+}
+
+// ... (previous submitListing, Auth code) ...
+
+// ─── CHAT ───
+async function fetchConversations() {
+  if(!TOKEN) return;
+  try {
+    const res = await fetch(`${API_URL}/messages/conversations`, {
+      headers: { 'x-auth-token': TOKEN }
+    });
+    if(!res.ok) throw new Error('Failed to fetch conversations');
+    const data = await res.json();
+    CONVOS.length = 0;
+    data.forEach(c => {
+      if(USER && c.id === USER._id) return; // Skip self-conversations
+      CONVOS.push(c);
+    });
+    
+    // If activeConv is set but NOT in CONVOS (new conversation), prepend it
+    if(activeConv && activeConv.id !== USER._id && !CONVOS.find(c => c.id === activeConv.id)) {
+      CONVOS.unshift(activeConv);
+    }
+    
+    renderConvos();
+    updateMsgBadge();
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+}
+
+async function fetchMessages(otherUserId) {
+  try {
+    const res = await fetch(`${API_URL}/messages/${otherUserId}`, {
+      headers: { 'x-auth-token': TOKEN }
+    });
+    if(!res.ok) throw new Error('Failed to fetch messages');
+    const data = await res.json();
+    MESSAGES.length = 0;
+    data.forEach(m => MESSAGES.push(m));
+    renderMessages();
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+}
+
+function updateMsgBadge() {
+  const badge = document.getElementById('msgBadge');
+  if(!badge) return;
+  const unreadCount = CONVOS.reduce((acc, c) => acc + (c.unread || 0), 0);
+  if(unreadCount > 0) {
+    badge.style.display = 'inline-flex';
+    badge.textContent = unreadCount;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderConvos(){
+  const list=document.getElementById('convList');
+  list.innerHTML='';
+  if(!CONVOS.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.85rem;">No conversations yet.<br>Start one from a skill card!</div>';
+    return;
+  }
+  CONVOS.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='conv' + (activeConv && c.id === activeConv.id ? ' active' : '');
+    div.innerHTML=`
+      <div class="conv-av" style="background:${c.ab};color:${c.ac}">${c.init}</div>
+      <div class="conv-info">
+        <div class="conv-name">${c.name}</div>
+        <div class="conv-preview">${c.last}</div>
+      </div>
+      <div class="conv-meta">
+        <span class="conv-time">${c.time}</span>
+        ${c.unread?`<span class="conv-unread">${c.unread}</span>`:''}
+      </div>`;
+    div.addEventListener('click',()=>{
+      activeConv=c;
+      document.getElementById('cmAv').style.background=c.ab;
+      document.getElementById('cmAv').style.color=c.ac;
+      document.getElementById('cmAv').textContent=c.init;
+      document.getElementById('cmName').textContent=c.name;
+      document.getElementById('cmStatus').textContent = '🟢 Online · Active';
+      document.getElementById('chatActions').style.display = 'flex';
+      socket.emit('join', c.room);
+      fetchMessages(c.id);
+      renderConvos();
+    });
+    list.appendChild(div);
+  });
+}
+
+function renderMessages(){
+  const box=document.getElementById('messages');
+  if(!activeConv) {
+    box.innerHTML = '<div style="text-align:center;padding:50px;color:var(--muted)">Select a conversation to start chatting</div>';
+    return;
+  }
+  box.innerHTML='<div class="msg-date">Today</div>';
+  MESSAGES.forEach(m=>{
+    const div=document.createElement('div');
+    div.className='msg'+(m.from==='me'?' mine':'');
+    const avColor=m.from==='me'?'background:var(--rose-soft);color:var(--rose)':'background:var(--sky-soft);color:var(--sky)';
+    const avInit=m.from==='me'?(USER ? USER.name[0] : 'U'):activeConv.init;
+    div.innerHTML=`
+      <div class="msg-av" style="${avColor}">${avInit}</div>
+      <div class="msg-content">
+        <div class="msg-bubble">${m.text}</div>
+        <div class="msg-time">${m.time}</div>
+      </div>`;
+    box.appendChild(div);
+  });
+  box.scrollTop=box.scrollHeight;
+}
+
+function sendMsg(){
+  const inp=document.getElementById('msgInput');
+  const text=inp.value.trim();
+  if(!text || !activeConv || !USER) return;
+  
+  const msgData = {
+    sender: USER._id,
+    receiver: activeConv.id,
+    text: text,
+    conversationId: activeConv.room
+  };
+  
+  socket.emit('sendMessage', msgData);
+  inp.value='';
+  
+  // Optimistically update local UI
+  MESSAGES.push({ from: 'me', text: text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), roomId: activeConv.room });
+  renderMessages();
+}
+
+async function acceptExchange() {
+  if(!activeConv || !USER) return;
+  // For demo, we assume 30 points if not specified
+  const points = 30; 
+  try {
+    const res = await fetch(`${API_URL}/skills/exchange/accept`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-auth-token': TOKEN 
+      },
+      body: JSON.stringify({ providerId: activeConv.id, points })
+    });
+    if(!res.ok) {
+      const errData = await res.json().catch(() => ({ msg: 'Exchange failed' }));
+      throw new Error(errData.msg || 'Exchange failed');
+    }
+    const data = await res.json();
+    showToast('✅ Exchange accepted! Points transferred.');
+    USER.points = data.newPoints;
+    if(data.exchangesCompleted !== undefined) USER.exchangesCompleted = data.exchangesCompleted;
+    if(data.acceptedExchanges) USER.acceptedExchanges = data.acceptedExchanges;
+    
+    localStorage.setItem('user', JSON.stringify(USER));
+    updateAuthUI();
+    renderProfile(); // Update numbers on profile
+    
+    const btn = document.getElementById('btnAcceptExchange');
+    if(btn) {
+      btn.textContent = 'Exchange Completed';
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+    }
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+}
+
+function showExchangeDetails() {
+  if(!activeConv) return;
+  const msg = `Exchange Summary:\nPartner: ${activeConv.name}\nStatus: Active\nYou are exchanging skills with ${activeConv.name.split(' ')[0]}. Confirm once you've received the service!`;
+  alert(msg);
+}
+
+document.getElementById('loginBtn').addEventListener('click', login);
+document.getElementById('signupBtn').addEventListener('click', signup);
+document.getElementById('msgInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}});
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();goto('home');document.getElementById('searchInput').focus();}
+  if(e.key==='Escape'){modal.classList.remove('open');closeMob();}
+});
+
+async function fetchStats() {
+  try {
+    const res = await fetch(`${API_URL}/skills/stats`);
+    if(res.ok) {
+      const data = await res.json();
+      const st = document.querySelectorAll('.stats .sn');
+      if(st && st.length >= 4) {
+        st[0].textContent = data.activeStudents || 0;
+        st[1].textContent = data.skillsListed || 0;
+        st[2].textContent = data.exchangesDone || 0;
+        st[3].textContent = data.avgRating || '0.0';
+      }
+    }
+  } catch(err) {
+    console.error(err);
+  }
+}
+
+const socket = io('http://localhost:5000');
+
+socket.on('message', (msg) => {
+  if (activeConv && (msg.sender === activeConv.id || msg.receiver === activeConv.id)) {
+    if(msg.sender !== USER._id) {
+       MESSAGES.push({
+        from: 'them',
+        text: msg.text,
+        time: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        roomId: msg.conversationId
+      });
+      renderMessages();
+    }
+  }
+  fetchConversations(); // Refresh sidebar for new messages
+});
+
+updateAuthUI();
+fetchSkills();
+fetchStats();
+if(TOKEN) fetchConversations();
+</script>
+</body>
+</html>
