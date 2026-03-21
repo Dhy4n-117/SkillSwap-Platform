@@ -902,7 +902,8 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
 <div id="toast"></div>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-const API_URL = 'http://localhost:5000/api';
+const IS_DEV = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
+const API_URL = IS_DEV ? 'http://localhost:5000/api' : '/api';
 let TOKEN = localStorage.getItem('token');
 let USER = JSON.parse(localStorage.getItem('user'));
 let currentPage = 'home';
@@ -1637,7 +1638,7 @@ async function fetchStats() {
   }
 }
 
-const socket = io('http://localhost:5000');
+const socket = IS_DEV ? io('http://localhost:5000') : io();
 
 socket.on('message', (msg) => {
   if (activeConv && (msg.sender === activeConv.id || msg.receiver === activeConv.id)) {
