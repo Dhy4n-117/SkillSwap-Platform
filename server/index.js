@@ -32,7 +32,7 @@ app.use('/api/messages', require('./routes/messages'));
 
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '../client')));
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
