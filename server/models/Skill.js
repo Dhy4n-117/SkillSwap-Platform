@@ -16,6 +16,7 @@ const SkillSchema = new mongoose.Schema({
   points: { type: Number, default: 0 },
   deliveryTime: { type: String },
   tags: [{ type: String }],
+  portfolioUrl: { type: String },
   provider: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   createdAt: { type: Date, default: Date.now }
 });

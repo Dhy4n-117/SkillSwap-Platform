@@ -7,12 +7,15 @@ const UserSchema = new mongoose.Schema({
   department: { type: String },
   year: { type: String },
   points: { type: Number, default: 240 },
+  pendingPoints: { type: Number, default: 0 },
   skillsOffer: [{ type: String }],
   skillsWant: [{ type: String }],
   avgRating: { type: Number, default: 0 },
   numRatings: { type: Number, default: 0 },
   exchangesCompleted: { type: Number, default: 0 },
   acceptedExchanges: [{ type: String }],
+  pendingExchanges: [{ type: String }],
+  savedMentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdAt: { type: Date, default: Date.now }
 });
 

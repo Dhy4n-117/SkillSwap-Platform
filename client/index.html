@@ -537,10 +537,11 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
     </div>
     <div style="max-width:1200px;margin:0 auto;">
       <div class="ph-tabs">
-        <button class="ph-tab active" onclick="switchPTab(this,'pt-listings')">My Listings</button>
-        <button class="ph-tab" onclick="switchPTab(this,'pt-reviews')">Reviews</button>
-        <button class="ph-tab" onclick="switchPTab(this,'pt-badges')">Badges</button>
-        <button class="ph-tab" onclick="switchPTab(this,'pt-history')">Exchange History</button>
+          <div class="ph-tab active" onclick="switchPTab(this,'pt-listings')">My Skills</div>
+          <div class="ph-tab" onclick="switchPTab(this,'pt-network')">My Network</div>
+          <div class="ph-tab" onclick="switchPTab(this,'pt-reviews')">Reviews</div>
+          <div class="ph-tab" onclick="switchPTab(this,'pt-badges')">Badges</div>
+          <div class="ph-tab" onclick="switchPTab(this,'pt-history')">History</div>
       </div>
     </div>
   </div>
@@ -641,6 +642,13 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
             </div>
           </div>
         </div>
+        <div id="pt-network" style="display:none;">
+          <div class="section-title">My Mentors & Connections</div>
+          <div class="section-sub">People you've saved for future learning</div>
+          <div id="networkGrid" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="color:var(--muted);font-size:0.9rem;">No mentors saved yet.</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -674,6 +682,10 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
           <option value="video">🎬 Video Editing</option>
           <option value="project">🚀 Project Help</option>
         </select>
+      </div>
+      <div class="frow">
+        <label>Portfolio / Proof of Work (Optional)</label>
+        <input type="url" class="finput" id="f-portfolio" placeholder="https://github.com/... or Behance link" oninput="updatePreview()"/>
       </div>
       <div class="frow">
         <label>Description *</label>
@@ -777,7 +789,9 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
           <div class="cm-name" id="cmName">Select User</div>
           <div class="cm-status" id="cmStatus">Offline</div>
         </div>
-        <div class="cm-actions" id="chatActions" style="display:none;">
+        <div class="cm-actions" id="chatActions" style="display:none; gap:8px;">
+          <button class="cm-btn" style="background:var(--sky-soft);color:var(--sky);border:none;font-weight:600;" onclick="showToast('📹 In-App Video Calling coming in V2!')">📹 Video</button>
+          <button class="cm-btn" style="background:var(--amber-soft);color:var(--amber);border:none;font-weight:600;" onclick="openWhiteboard()">🖍️ Whiteboard</button>
           <button class="cm-btn" onclick="openRatingModal()">⭐ Rate User</button>
           <button class="cm-btn" id="btnExchangeDetails" onclick="showExchangeDetails()">Exchange Details</button>
           <button class="cm-btn primary" id="btnAcceptExchange" onclick="acceptExchange()">Accept Exchange</button>
@@ -872,12 +886,23 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
         <div class="ms"><div class="msl">Offered By</div><div class="msv" id="mStudent"></div></div>
         <div class="ms"><div class="msl">Department</div><div class="msv" id="mDept"></div></div>
       </div>
-      <div class="ma">
+      <div class="ma" style="flex-wrap:wrap; justify-content:center;">
         <button class="mb1" id="mReq">Request Exchange ↗</button>
         <button class="mb2" id="mChat2">💬 Chat</button>
+        <button class="mb2" id="mSaveMentor" onclick="toggleMentor()" style="width:100%; margin-top:8px;">⭐ Save to Network</button>
+        <button class="mb2" id="mPort" style="display:none; width:100%; margin-top:8px;">🔗 View Portfolio</button>
       </div>
     </div>
   </div>
+</div>
+
+<!-- WHITEBOARD MODAL -->
+<div id="whiteboardModal" style="display:none;position:fixed;inset:0;z-index:800;background:#fff;flex-direction:column;">
+  <div style="background:var(--bg2);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+    <h3 style="font-family:'Playfair Display',serif;margin:0;display:flex;align-items:center;gap:10px;">🖍️ Collaborative Whiteboard <span style="font-size:0.8rem;background:var(--rose-soft);color:var(--rose);padding:4px 8px;border-radius:6px;font-family:'Inter',sans-serif;">Beta</span></h3>
+    <button onclick="document.getElementById('whiteboardModal').style.display='none'" style="border:none;background:var(--rose);color:#fff;padding:8px 16px;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.2s;">Close</button>
+  </div>
+  <iframe id="wbFrame" src="" style="width:100%;height:100%;border:none;"></iframe>
 </div>
 
 <!-- RATING MODAL -->
@@ -1083,16 +1108,30 @@ function openModal(s){
   
   const reqBtn = document.getElementById('mReq');
   const chatBtnModal = document.getElementById('mChat2');
+  const saveBtnModal = document.getElementById('mSaveMentor');
   
+  // Store the active viewing skill so toggleMentor knows who it is
+  window._activeModalSkillProvider = s.provider._id;
+
   // Prevent self-interaction
   if(USER && s.provider._id === USER._id) {
     reqBtn.style.display = 'none';
     chatBtnModal.style.display = 'none';
-    // Show a small note that it's your own
-    document.getElementById('mDesc').insertAdjacentHTML('afterend', '<div id="mSelfNote" style="font-size:.8rem;color:var(--rose);margin-top:10px;font-weight:600;">You listed this skill!</div>');
+    saveBtnModal.style.display = 'none';
+    const note = document.getElementById('mSelfNote'); if(!note) {
+      document.getElementById('mDesc').insertAdjacentHTML('afterend', '<div id="mSelfNote" style="font-size:.8rem;color:var(--rose);margin-top:10px;font-weight:600;">You listed this skill!</div>');
+    }
   } else {
     reqBtn.style.display = 'block';
     chatBtnModal.style.display = 'flex';
+    saveBtnModal.style.display = 'block';
+    
+    // Check if already in mentors network
+    if (USER && USER.savedMentors && USER.savedMentors.some(m => m._id === s.provider._id || m === s.provider._id)) {
+      saveBtnModal.textContent = "⭐ Remove from Network";
+    } else {
+      saveBtnModal.textContent = "⭐ Save to Network";
+    }
     const note = document.getElementById('mSelfNote'); if(note) note.remove();
   }
 
@@ -1159,10 +1198,35 @@ function openModal(s){
 function switchPTab(btn,tabId){
   document.querySelectorAll('.ph-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  ['pt-listings','pt-reviews','pt-badges','pt-history'].forEach(id=>{
+  ['pt-listings','pt-reviews','pt-badges','pt-history','pt-network'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
   document.getElementById(tabId).style.display='block';
+}
+
+async function toggleMentor() {
+  if(!TOKEN) { showToast('🔑 Please sign in first'); goto('auth'); return; }
+  const pId = window._activeModalSkillProvider;
+  if(!pId) return;
+
+  try {
+    const res = await fetch(`${API_URL}/auth/mentors/${pId}`, {
+      method: 'POST',
+      headers: { 'x-auth-token': TOKEN }
+    });
+    if(!res.ok) throw new Error('Failed to toggle network');
+    const data = await res.json();
+    
+    // Refresh user cache
+    const uRes = await fetch(`${API_URL}/auth`, { headers: { 'x-auth-token': TOKEN } });
+    if(uRes.ok) USER = await uRes.json();
+    
+    showToast(`⭐ ${data.msg}`);
+    document.getElementById('modal').classList.remove('open');
+    if(currentPage === 'profile') renderProfile();
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
 }
 
 // ─── CREATE LISTING ───
@@ -1215,6 +1279,7 @@ async function submitListing(){
   const category = categoryText.includes(' ') ? categoryText.split(' ')[1] : categoryText;
   const points=document.getElementById('f-pts').value;
   const deliveryTime=document.getElementById('f-time').value;
+  const portfolioUrl=document.getElementById('f-portfolio').value.trim();
   const exchangeMethod=document.querySelector('.exopt.active .eo-label').textContent;
 
   if(!title || !description || !category){showToast('⚠️ Please fill in all required fields');return;}
@@ -1226,7 +1291,7 @@ async function submitListing(){
         'Content-Type': 'application/json',
         'x-auth-token': TOKEN
       },
-      body: JSON.stringify({ title, description, category, points, deliveryTime, exchangeMethod, tags: formTags })
+      body: JSON.stringify({ title, description, category, points, deliveryTime, exchangeMethod, tags: formTags, portfolioUrl })
     });
     if(!res.ok) {
       const errData = await res.json().catch(()=>({msg:'Failed to list skill.'}));
@@ -1610,6 +1675,16 @@ function showExchangeDetails() {
   if(!activeConv) return;
   const msg = `Exchange Summary:\nPartner: ${activeConv.name}\nStatus: Active\nYou are exchanging skills with ${activeConv.name.split(' ')[0]}. Confirm once you've received the service!`;
   alert(msg);
+}
+
+function openWhiteboard() {
+  const modal = document.getElementById('whiteboardModal');
+  const frame = document.getElementById('wbFrame');
+  if (!frame.src || frame.src === window.location.href) {
+    // Generate a unique URL using the conversation room ID string to sync the whiteboard sessions between both users automatically.
+    frame.src = "https://excalidraw.com/#room=" + activeConv.room.substring(0, 20) + ",sswap_" + activeConv.room.substring(0, 10);
+  }
+  modal.style.display = 'flex';
 }
 
 document.getElementById('loginBtn').addEventListener('click', login);

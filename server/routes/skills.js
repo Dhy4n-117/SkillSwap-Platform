@@ -62,7 +62,7 @@ router.get('/', async (req, res) => {
 // @desc    Create a skill listing
 // @access  Private
 router.post('/', auth, async (req, res) => {
-  const { title, category, description, exchangeMethod, points, deliveryTime, tags } = req.body;
+  const { title, category, description, exchangeMethod, points, deliveryTime, tags, portfolioUrl } = req.body;
 
   try {
     const newSkill = new Skill({
@@ -73,6 +73,7 @@ router.post('/', auth, async (req, res) => {
       points,
       deliveryTime,
       tags,
+      portfolioUrl,
       provider: req.user.id
     });
 
@@ -117,31 +118,53 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// @route   POST api/skills/exchange/request
+// @desc    Request an exchange, lock points in Escrow
+// @access  Private
+router.post('/exchange/request', auth, async (req, res) => {
+  const { providerId, points } = req.body;
+  try {
+    const receiver = await User.findById(req.user.id);
+    const convId = [req.user.id, providerId].sort().join('_');
+    
+    if (receiver.acceptedExchanges.includes(convId) || receiver.pendingExchanges.includes(convId)) {
+      return res.status(400).json({ msg: 'Exchange already active or completed' });
+    }
+    if (req.user.id === providerId) return res.status(400).json({ msg: 'You cannot exchange with yourself' });
+    if (receiver.points < points) return res.status(400).json({ msg: 'Insufficient points' });
+
+    receiver.points -= points;
+    receiver.pendingPoints += points;
+    receiver.pendingExchanges.push(convId);
+    await receiver.save();
+
+    res.json({ msg: 'Points placed in Escrow', newPoints: receiver.points });
+  } catch (err) { res.status(500).send('Server Error'); }
+});
+
 // @route   POST api/skills/exchange/accept
-// @desc    Accept a skill exchange
+// @desc    Release Escrow points to Provider
 // @access  Private
 router.post('/exchange/accept', auth, async (req, res) => {
-  const { providerId, skillId, points } = req.body;
+  const { providerId, points } = req.body;
   try {
     const receiver = await User.findById(req.user.id);
     const provider = await User.findById(providerId);
     if (!receiver || !provider) return res.status(404).json({ msg: 'User not found' });
-    if (req.user.id === providerId) return res.status(400).json({ msg: 'You cannot exchange with yourself' });
 
     const convId = [req.user.id, providerId].sort().join('_');
-    if (receiver.acceptedExchanges.includes(convId)) {
-      return res.status(400).json({ msg: 'Exchange already completed for this conversation' });
-    }
 
-    // Deduct points from receiver, add to provider
-    if (receiver.points < points) return res.status(400).json({ msg: 'Insufficient points' });
+    if (receiver.acceptedExchanges.includes(convId)) return res.status(400).json({ msg: 'Exchange already completed' });
+    if (!receiver.pendingExchanges.includes(convId)) return res.status(400).json({ msg: 'No Escrow found. Please request exchange first.' });
 
-    receiver.points -= points;
+    // Release points
+    receiver.pendingPoints -= points;
     provider.points += points;
     
     receiver.exchangesCompleted += 1;
     provider.exchangesCompleted += 1;
     
+    receiver.pendingExchanges = receiver.pendingExchanges.filter(id => id !== convId);
     receiver.acceptedExchanges.push(convId);
     provider.acceptedExchanges.push(convId);
 
@@ -149,7 +172,7 @@ router.post('/exchange/accept', auth, async (req, res) => {
     await provider.save();
 
     res.json({ 
-      msg: 'Exchange accepted!', 
+      msg: 'Escrow released! Exchange accepted.', 
       newPoints: receiver.points, 
       exchangesCompleted: receiver.exchangesCompleted,
       acceptedExchanges: receiver.acceptedExchanges 
