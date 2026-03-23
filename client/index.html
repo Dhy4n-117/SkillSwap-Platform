@@ -1136,7 +1136,7 @@ function openModal(s){
   }
 
   // Update request button to deep link to chat
-  reqBtn.onclick = () => {
+  reqBtn.onclick = async () => {
     modal.classList.remove('open');
     if(!TOKEN) { showToast('🔑 Please sign in first'); goto('auth'); return; }
     
@@ -1152,24 +1152,36 @@ function openModal(s){
       last: `Interested in: ${s.title}`
     };
     
-    // Send an automated initial message to establish the conversation in the DB
-    const initialMsg = {
-      sender: USER._id,
-      receiver: s.provider._id,
-      text: `👋 Hi! I'm interested in your skill: "${s.title}". Let's exchange!`,
-      conversationId: room
-    };
-    socket.emit('sendMessage', initialMsg);
-    
-    goto('chat');
-    showToast('💬 Starting conversation...');
+    // Wire Escrow Request API
+    try {
+      const res = await fetch(`${API_URL}/skills/exchange/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-auth-token': TOKEN },
+        body: JSON.stringify({ providerId: s.provider._id, points: s.points })
+      });
+      if(!res.ok) {
+        const errData = await res.json().catch(()=>({msg:'Failed to request exchange.'}));
+        throw new Error(errData.msg || 'Failed to request exchange.');
+      }
+      const data = await res.json();
+      showToast(`🎉 ${data.msg}`);
+      USER.points = data.newPoints;
+      localStorage.setItem('user', JSON.stringify(USER));
+      updateAuthUI();
+      if(currentPage === 'profile') renderProfile();
+      
+      // Deep Link Chat
+      chatBtnModal.onclick();
+    } catch (err) {
+      showToast('❌ ' + err.message);
+    }
   };
-  
-  // Update Chat button to deep link to chat
+    
+  // Send an automated initial message to establish the conversation in the DB
   chatBtnModal.onclick = () => {
     modal.classList.remove('open');
     if(!TOKEN) { showToast('🔑 Please sign in first'); goto('auth'); return; }
-    
+  
     const room = [USER._id, s.provider._id].sort().join('_');
     activeConv = {
       id: s.provider._id,
