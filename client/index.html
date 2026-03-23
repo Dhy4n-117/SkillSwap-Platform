@@ -1335,7 +1335,7 @@ async function login(){
     const data = await res.json();
     TOKEN = data.token;
     localStorage.setItem('token', TOKEN);
-    const userRes = await fetch(`${API_URL}/auth/me`, {
+    const userRes = await fetch(`${API_URL}/auth`, {
       headers: { 'x-auth-token': TOKEN }
     });
     USER = await userRes.json();
@@ -1390,6 +1390,37 @@ function renderProfile() {
         <button class="ml-btn ml-del" onclick="deleteSkill('${s._id}')">Delete</button>
       </div>`;
     grid.prepend(card);
+  });
+  
+  renderMentors();
+}
+
+function renderMentors() {
+  const grid = document.getElementById('networkGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  if(!USER || !USER.savedMentors || USER.savedMentors.length === 0) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:0.9rem;">No mentors saved yet.</div>';
+    return;
+  }
+  
+  USER.savedMentors.forEach(m => {
+    if(typeof m === 'string' || !m.name) return; 
+    
+    const card = document.createElement('div');
+    card.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;cursor:pointer;';
+    card.onclick = () => alert("You can request an exchange from " + m.name.split(' ')[0] + " via a skill card!");
+    
+    const init = m.name.split(' ').map(n=>n[0]).join('');
+    card.innerHTML = `
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--rose-soft);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:var(--rose);flex-shrink:0;">${init}</div>
+      <div style="flex:1;">
+        <div style="font-size:.9rem;font-weight:600;margin-bottom:3px;">${m.name}</div>
+        <div style="font-size:.78rem;color:var(--muted);">${m.department} · Yr ${m.year} · ⭐ ${m.avgRating || '0.0'}</div>
+      </div>
+      <button onclick="event.stopPropagation(); window._activeModalSkillProvider='${m._id}'; toggleMentor();" style="padding:6px 12px;border-radius:10px;background:var(--border);border:none;font-size:.76rem;font-weight:600;cursor:pointer;color:var(--text);">Remove</button>
+    `;
+    grid.appendChild(card);
   });
 }
 
