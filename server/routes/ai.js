@@ -1,3 +1,8 @@
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const Skill = require('../models/Skill');
+const User = require('../models/User');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Initialize Gemini if key exists
