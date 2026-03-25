@@ -665,7 +665,7 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
 <div class="page" id="page-create">
   <div class="create-wrap">
     <div class="create-header">
-      <h2>List a New Skill</h2>
+      <h2 id="createTitle">List a New Skill</h2>
       <p>Share what you're good at and start earning points from fellow students.</p>
     </div>
 
@@ -768,7 +768,7 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
 
     <div class="submit-bar">
       <button class="sbtn-ghost" onclick="goto('home')">Cancel</button>
-      <button class="sbtn-main" onclick="submitListing()">Publish Listing ↗</button>
+      <button class="sbtn-main" id="createBtn" onclick="submitListing()">Publish Listing ↗</button>
     </div>
   </div>
 </div><!-- /page-create -->
@@ -1024,7 +1024,7 @@ function goto(page) {
     formTags.length = 0;
     renderTags();
     document.getElementById('createBtn').textContent = 'List Your Skill ↗';
-    document.querySelector('#page-create .mtitle').textContent = 'List a New Skill';
+    document.getElementById('createTitle').textContent = 'List a New Skill';
     updatePreview();
   }
   
@@ -1400,7 +1400,7 @@ async function submitListing(){
     // Reset Edit State
     window._editingSkillId = null;
     document.getElementById('createBtn').textContent = 'List Your Skill ↗';
-    document.querySelector('#page-create .mtitle').textContent = 'List a New Skill';
+    document.getElementById('createTitle').textContent = 'List a New Skill';
 
     setTimeout(()=>goto('home'), 1200);
 
@@ -1443,8 +1443,10 @@ function editSkill(id) {
   renderTags();
   
   // Update UI
-  document.getElementById('createBtn').textContent = 'Update Listing ↗';
-  document.querySelector('#page-create .mtitle').textContent = 'Edit Your Listing';
+  const cBtn = document.getElementById('createBtn');
+  const cTitle = document.getElementById('createTitle');
+  if(cBtn) cBtn.textContent = 'Update Listing ↗';
+  if(cTitle) cTitle.textContent = 'Edit Your Listing';
   updatePreview();
   goto('create');
 }
