@@ -1014,6 +1014,20 @@ function goto(page) {
   const targetPage = document.getElementById('page-'+page);
   if(targetPage) targetPage.classList.add('active');
   
+  if(page === 'create' && !window._editingSkillId) {
+    // Clear form for NEW listing if we weren't just triggered by editSkill()
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-pts').value = '30';
+    document.getElementById('f-time').value = '1-2 days';
+    document.getElementById('f-portfolio').value = '';
+    formTags.length = 0;
+    renderTags();
+    document.getElementById('createBtn').textContent = 'List Your Skill ↗';
+    document.querySelector('#page-create .mtitle').textContent = 'List a New Skill';
+    updatePreview();
+  }
+  
   document.querySelectorAll('.nl').forEach(b=>b.classList.remove('active'));
   const nb = document.getElementById('nl-'+page);
   if(nb) nb.classList.add('active');
@@ -1186,6 +1200,10 @@ function openModal(s){
     chatBtnModal.style.display = 'flex';
     saveBtnModal.style.display = 'block';
     
+    // Cleanup AI button and verified badge from previous modal views
+    const vExist = document.getElementById('mVerifyBtn'); if(vExist) vExist.remove();
+    const bExist = document.getElementById('mTitle').querySelector('.vbadge'); if(bExist) bExist.remove();
+
     // Check if already in mentors network
     if (USER && USER.savedMentors && USER.savedMentors.some(m => m._id === s.provider._id || m === s.provider._id)) {
       saveBtnModal.textContent = "⭐ Remove from Network";
@@ -1359,9 +1377,13 @@ async function submitListing(){
 
   if(!title || !description || !category){showToast('⚠️ Please fill in all required fields');return;}
 
+  const isEdit = !!window._editingSkillId;
+  const url = isEdit ? `${API_URL}/skills/${window._editingSkillId}` : `${API_URL}/skills`;
+  const method = isEdit ? 'PUT' : 'POST';
+
   try {
-    const res = await fetch(`${API_URL}/skills`, {
-      method: 'POST',
+    const res = await fetch(url, {
+      method: method,
       headers: { 
         'Content-Type': 'application/json',
         'x-auth-token': TOKEN
@@ -1369,16 +1391,62 @@ async function submitListing(){
       body: JSON.stringify({ title, description, category, points, deliveryTime, exchangeMethod, tags: formTags, portfolioUrl })
     });
     if(!res.ok) {
-      const errData = await res.json().catch(()=>({msg:'Failed to list skill.'}));
-      throw new Error(errData.msg || 'Failed to list skill.');
+      const errData = await res.json().catch(()=>({msg:'Failed to save skill.'}));
+      throw new Error(errData.msg || 'Failed to save skill.');
     }
     
-    showToast('🎉 Skill listed successfully!');
+    showToast(isEdit ? '✨ Listing updated successfully!' : '🎉 Skill listed successfully!');
+    
+    // Reset Edit State
+    window._editingSkillId = null;
+    document.getElementById('createBtn').textContent = 'List Your Skill ↗';
+    document.querySelector('#page-create .mtitle').textContent = 'List a New Skill';
+
     setTimeout(()=>goto('home'), 1200);
 
   } catch (err) {
     showToast('❌ ' + err.message);
   }
+}
+
+function editSkill(id) {
+  const s = SKILLS.find(x => x._id === id);
+  if(!s) return;
+  
+  window._editingSkillId = id;
+  
+  // Fill form
+  document.getElementById('f-title').value = s.title;
+  document.getElementById('f-desc').value = s.description;
+  document.getElementById('f-pts').value = s.points;
+  document.getElementById('f-time').value = s.deliveryTime || '';
+  document.getElementById('f-portfolio').value = s.portfolioUrl || '';
+  
+  // Set Category
+  const catSel = document.getElementById('f-cat');
+  for(let i=0; i<catSel.options.length; i++) {
+    if(catSel.options[i].text.includes(s.category)) {
+      catSel.selectedIndex = i;
+      break;
+    }
+  }
+  
+  // Set Exchange Method
+  document.querySelectorAll('.exopt').forEach(opt => {
+    if(opt.querySelector('.eo-label').textContent === s.exchangeMethod) opt.classList.add('active');
+    else opt.classList.remove('active');
+  });
+  
+  // Set Tags
+  formTags.length = 0;
+  if(s.tags) s.tags.forEach(t => formTags.push(t));
+  renderTags();
+  
+  // Update UI
+  document.getElementById('createBtn').textContent = 'Update Listing ↗';
+  document.querySelector('#page-create .mtitle').textContent = 'Edit Your Listing';
+  updatePreview();
+  goto('create');
 }
 
 // ─── AUTH ───
@@ -1461,7 +1529,7 @@ function renderProfile() {
         <div class="ml-meta">${s.points} pts · ⭐ ${s.provider.avgRating || '0.0'} · ${s.category}</div>
       </div>
       <div class="ml-actions">
-        <button class="ml-btn ml-edit">Edit</button>
+        <button class="ml-btn ml-edit" onclick="editSkill('${s._id}')">Edit</button>
         <button class="ml-btn ml-del" onclick="deleteSkill('${s._id}')">Delete</button>
       </div>`;
     grid.prepend(card);

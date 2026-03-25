@@ -183,4 +183,26 @@ router.post('/exchange/accept', auth, async (req, res) => {
   }
 });
 
+// @route   PUT api/skills/:id
+// @desc    Update a skill listing
+// @access  Private
+router.put('/:id', auth, async (req, res) => {
+  const { title, category, description, exchangeMethod, points, deliveryTime, tags, portfolioUrl } = req.body;
+  try {
+    let skill = await Skill.findById(req.params.id);
+    if (!skill) return res.status(404).json({ msg: 'Skill not found' });
+    if (skill.provider.toString() !== req.user.id) return res.status(401).json({ msg: 'User not authorized' });
+
+    skill = await Skill.findByIdAndUpdate(
+      req.params.id,
+      { $set: { title, category, description, exchangeMethod, points, deliveryTime, tags, portfolioUrl } },
+      { new: true }
+    );
+    res.json(skill);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;
