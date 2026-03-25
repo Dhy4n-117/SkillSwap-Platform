@@ -28,6 +28,7 @@ app.use(cors());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/skills', require('./routes/skills'));
 app.use('/api/ratings', require('./routes/ratings'));
+app.use('/api/ai', require('./routes/ai'));
 app.use('/api/messages', require('./routes/messages'));
 
 // Serve frontend static files

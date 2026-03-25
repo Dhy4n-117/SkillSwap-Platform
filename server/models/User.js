@@ -16,6 +16,7 @@ const UserSchema = new mongoose.Schema({
   acceptedExchanges: [{ type: String }],
   pendingExchanges: [{ type: String }],
   savedMentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  verifiedSkills: [{ type: String }],
   createdAt: { type: Date, default: Date.now }
 });
 

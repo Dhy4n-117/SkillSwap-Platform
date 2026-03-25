@@ -18,6 +18,11 @@
   --plum:#8b4f8e;--plum-soft:#f4eaf5;
   --r:24px;
 }
+  .vbadge{background:linear-gradient(135deg,#6366f1,#a855f7); color:white; font-size:.6rem; padding:2px 6px; border-radius:4px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 2px 5px rgba(99,102,241,0.3); margin-left:8px;}
+  .ai-msg{max-width:85%; padding:12px 18px; border-radius:18px; font-size:.9rem; line-height:1.5; margin-bottom:10px;}
+  .ai-msg.bot{background:white; color:var(--text); align-self:flex-start; border-bottom-left-radius:4px; box-shadow:0 2px 5px rgba(0,0,0,0.05);}
+  .ai-msg.user{background:#6366f1; color:white; align-self:flex-end; border-bottom-right-radius:4px; box-shadow:0 4px 10px rgba(99,102,241,0.3);}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
@@ -924,6 +929,32 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
   </div>
 </div>
 
+<!-- AI INTERVIEW MODAL -->
+<div id="aiModal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px);">
+  <div class="mbox" style="padding:0; max-width:500px; width:100%; height:80vh; background:white; border-radius:30px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+    <div style="background:linear-gradient(135deg,#6366f1,#a855f7); padding:20px; color:white; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div>
+        <h3 style="margin:0; font-family:'Playfair Display',serif; font-size:1.4rem;">🤖 AI Skill Verification</h3>
+        <p id="aiSubtitle" style="margin:0; font-size:.8rem; opacity:0.9;">Proving expertise through intelligence</p>
+      </div>
+      <button onclick="closeAI()" style="background:rgba(255,255,255,0.2); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-weight:700; transition:all .2s;">✕</button>
+    </div>
+    
+    <div id="aiChat" style="flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; background:#f9fafb;"></div>
+    
+    <div id="aiInputArea" style="padding:20px; background:white; border-top:1px solid #eee; display:flex; gap:10px; flex-shrink:0;">
+      <input type="text" id="aiAnsInput" placeholder="Type your answer here..." style="flex:1; padding:12px 18px; border:2px solid #eee; border-radius:15px; font-family:inherit; outline:none; transition:border-color .2s;">
+      <button onclick="submitAIAnswer()" style="background:#6366f1; color:white; border:none; padding:0 25px; border-radius:15px; font-weight:600; cursor:pointer;" id="aiSendBtn">Send</button>
+    </div>
+    <div id="aiResultArea" style="display:none; padding:30px; text-align:center; background:white; flex-direction:column; align-items:center; justify-content:center; height:100%;">
+      <div id="aiResultIcon" style="font-size:4rem; margin-bottom:20px;">🎉</div>
+      <h2 id="aiResultTitle" style="font-family:'Playfair Display',serif; margin-bottom:10px;">Verification Passed!</h2>
+      <p id="aiResultMsg" style="color:var(--sub); margin-bottom:25px;">You've demonstrated great depth.</p>
+      <button onclick="closeAI()" style="background:var(--rose); color:white; border:none; padding:12px 35px; border-radius:15px; font-weight:600; cursor:pointer;">Finish</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
@@ -1080,7 +1111,10 @@ function renderCards(){
     <div class="cb">
       <div class="ch">
         <span class="cchip" style="background:${p?.cb || 'var(--rose-soft)'};color:${p?.cc || 'var(--rose)'}">${cat?.em || '✦'} ${s.category}</span>
-        <span class="rrow"><span class="st">★</span>${s.provider.avgRating || '0.0'}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${s.isVerified ? '<span class="vbadge">✦ Verified</span>' : ''}
+          <span class="rrow"><span class="st">★</span>${s.provider.avgRating || '0.0'}</span>
+        </div>
       </div>
       <div class="ctitle">${s.title}</div>
       <div class="cdesc">${s.description.length>110?s.description.slice(0,110)+'…':s.description}</div>
@@ -1138,6 +1172,14 @@ function openModal(s){
     saveBtnModal.style.display = 'none';
     const note = document.getElementById('mSelfNote'); if(!note) {
       document.getElementById('mDesc').insertAdjacentHTML('afterend', '<div id="mSelfNote" style="font-size:.8rem;color:var(--rose);margin-top:10px;font-weight:600;">You listed this skill!</div>');
+    }
+    // Add Verify Button if not verified
+    if(!s.isVerified) {
+      const vExist = document.getElementById('mVerifyBtn'); if(vExist) vExist.remove();
+      document.querySelector('.ma').insertAdjacentHTML('beforeend', `<button class="mb2" id="mVerifyBtn" onclick="startAI('${s._id}')" style="width:100%; margin-top:8px; background:linear-gradient(135deg,#6366f1,#a855f7); color:white; border:none;">🤖 Verify with AI</button>`);
+    } else {
+      const vExist = document.getElementById('mVerifyBtn'); if(vExist) vExist.remove();
+      document.getElementById('mTitle').insertAdjacentHTML('beforeend', ' <span class="vbadge">✦ Verified</span>');
     }
   } else {
     reqBtn.style.display = 'block';
@@ -1796,6 +1838,85 @@ updateAuthUI();
 fetchSkills();
 fetchStats();
 if(TOKEN) fetchConversations();
+
+// ─── AI INTERVIEW LOGIC ───
+async function startAI(skillId) {
+  try {
+    const res = await fetch(`${API_URL}/ai/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-auth-token': TOKEN },
+      body: JSON.stringify({ skillId })
+    });
+    if(!res.ok) throw new Error('Failed to start AI interview');
+    const data = await res.json();
+    
+    document.getElementById('aiModal').style.display = 'flex';
+    document.getElementById('aiChat').innerHTML = '';
+    document.getElementById('aiInputArea').style.display = 'flex';
+    document.getElementById('aiResultArea').style.display = 'none';
+    
+    addAIMsg("Hello! I'm your AI technical examiner. I'll ask you 3 questions to verify your expertise. Good luck!", 'bot');
+    setTimeout(() => addAIMsg(data.question, 'bot'), 1000);
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+}
+
+function addAIMsg(text, role) {
+  const chat = document.getElementById('aiChat');
+  const div = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function submitAIAnswer() {
+  const inp = document.getElementById('aiAnsInput');
+  const ans = inp.value.trim();
+  if(!ans) return;
+  
+  addAIMsg(ans, 'user');
+  inp.value = '';
+  
+  try {
+    const res = await fetch(`${API_URL}/ai/answer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-auth-token': TOKEN },
+      body: JSON.stringify({ answer: ans })
+    });
+    const data = await res.json();
+    
+    if(data.done) {
+      setTimeout(() => showAIResult(data), 1000);
+    } else {
+      setTimeout(() => addAIMsg(data.nextQuestion, 'bot'), 1000);
+    }
+  } catch (err) {
+    showToast('❌ AI Error');
+  }
+}
+
+function showAIResult(data) {
+  document.getElementById('aiInputArea').style.display = 'none';
+  const resArea = document.getElementById('aiResultArea');
+  resArea.style.display = 'flex';
+  document.getElementById('aiResultIcon').textContent = data.passed ? '🎉' : '❌';
+  document.getElementById('aiResultTitle').textContent = data.passed ? 'Verification Passed!' : 'Verification Failed';
+  document.getElementById('aiResultMsg').textContent = data.msg;
+  
+  if(data.passed) {
+    fetchSkills(); // Refresh to show badge across app
+  }
+}
+
+function closeAI() {
+  document.getElementById('aiModal').style.display = 'none';
+}
+
+document.getElementById('aiAnsInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') submitAIAnswer();
+});
 </script>
 </body>
 </html>
