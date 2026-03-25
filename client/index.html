@@ -22,6 +22,10 @@
   .ai-msg{max-width:85%; padding:12px 18px; border-radius:18px; font-size:.9rem; line-height:1.5; margin-bottom:10px;}
   .ai-msg.bot{background:white; color:var(--text); align-self:flex-start; border-bottom-left-radius:4px; box-shadow:0 2px 5px rgba(0,0,0,0.05);}
   .ai-msg.user{background:#6366f1; color:white; align-self:flex-end; border-bottom-right-radius:4px; box-shadow:0 4px 10px rgba(99,102,241,0.3);}
+  .ai-msg.thinking span { animation: blink 1.4s infinite both; font-size: 1.5rem; line-height: 0; display: inline-block; margin: 0 1px; }
+  .ai-msg.thinking span:nth-child(2) { animation-delay: .2s; }
+  .ai-msg.thinking span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
@@ -1912,22 +1916,34 @@ if(TOKEN) fetchConversations();
 // ─── AI INTERVIEW LOGIC ───
 async function startAI(skillId) {
   try {
+    // UI Setup
+    const modal = document.getElementById('aiModal');
+    const chat = document.getElementById('aiChat');
+    modal.style.display = 'flex';
+    chat.innerHTML = '';
+    document.getElementById('aiInputArea').style.display = 'none'; // Hide input while generating
+    document.getElementById('aiResultArea').style.display = 'none';
+
+    addAIMsg("Hello! I'm your AI technical examiner. I'm generating some custom questions for you...", 'bot');
+    showAIThinking();
+
     const res = await fetch(`${API_URL}/ai/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-auth-token': TOKEN },
       body: JSON.stringify({ skillId })
     });
+    removeAIThinking();
+    
     if(!res.ok) throw new Error('Failed to start AI interview');
     const data = await res.json();
     
-    document.getElementById('aiModal').style.display = 'flex';
-    document.getElementById('aiChat').innerHTML = '';
     document.getElementById('aiInputArea').style.display = 'flex';
-    document.getElementById('aiResultArea').style.display = 'none';
-    
-    addAIMsg("Hello! I'm your AI technical examiner. I'll ask you 3 questions to verify your expertise. Good luck!", 'bot');
-    setTimeout(() => addAIMsg(data.question, 'bot'), 1000);
+    if(data.isLLM) {
+      addAIMsg("Okay, I've prepared 3 specific questions based on your skill. Good luck!", 'bot');
+    }
+    setTimeout(() => addAIMsg(data.question, 'bot'), 800);
   } catch (err) {
+    removeAIThinking();
     showToast('❌ ' + err.message);
   }
 }
@@ -1941,6 +1957,21 @@ function addAIMsg(text, role) {
   chat.scrollTop = chat.scrollHeight;
 }
 
+function showAIThinking() {
+  const chat = document.getElementById('aiChat');
+  const div = document.createElement('div');
+  div.className = 'ai-msg bot thinking';
+  div.id = 'ai-thinking';
+  div.innerHTML = '<span>.</span><span>.</span><span>.</span>';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeAIThinking() {
+  const el = document.getElementById('ai-thinking');
+  if(el) el.remove();
+}
+
 async function submitAIAnswer() {
   const inp = document.getElementById('aiAnsInput');
   const ans = inp.value.trim();
@@ -1948,6 +1979,7 @@ async function submitAIAnswer() {
   
   addAIMsg(ans, 'user');
   inp.value = '';
+  showAIThinking();
   
   try {
     const res = await fetch(`${API_URL}/ai/answer`, {
@@ -1956,13 +1988,15 @@ async function submitAIAnswer() {
       body: JSON.stringify({ answer: ans })
     });
     const data = await res.json();
+    removeAIThinking();
     
     if(data.done) {
-      setTimeout(() => showAIResult(data), 1000);
+      setTimeout(() => showAIResult(data), 800);
     } else {
-      setTimeout(() => addAIMsg(data.nextQuestion, 'bot'), 1000);
+      setTimeout(() => addAIMsg(data.nextQuestion, 'bot'), 800);
     }
   } catch (err) {
+    removeAIThinking();
     showToast('❌ AI Error');
   }
 }

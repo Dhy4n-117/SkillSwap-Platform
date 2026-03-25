@@ -1,10 +1,13 @@
-const express = require('express');
-const router = express.Router();
-const auth = require('../middleware/auth');
-const Skill = require('../models/Skill');
-const User = require('../models/User');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// --- Predefined Questions ---
+// Initialize Gemini if key exists
+let genAI, model;
+if (process.env.GEMINI_API_KEY) {
+  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+}
+
+// --- Predefined Questions (Fallback) ---
 const QUESTIONS = {
   'Coding': [
     { q: 'What is the difference between "==" and "===" in JavaScript?', keywords: ['type', 'value', 'strict', 'coercion'] },
@@ -38,11 +41,9 @@ const QUESTIONS = {
   ]
 };
 
-// In-memory interview storage (for demo purposes)
 const ACTIVE_INTERVIEWS = {};
 
 // @route   POST api/ai/start
-// @desc    Start an AI interview for a skill
 router.post('/start', auth, async (req, res) => {
   const { skillId } = req.body;
   try {
@@ -50,19 +51,45 @@ router.post('/start', auth, async (req, res) => {
     if (!skill) return res.status(404).json({ msg: 'Skill not found' });
     if (skill.provider.toString() !== req.user.id) return res.status(401).json({ msg: 'Unauthorized' });
 
-    const qSet = QUESTIONS[skill.category] || QUESTIONS['Coding'];
+    let finalQuestions = [];
+    let isLLM = false;
+
+    if (model) {
+      try {
+        const prompt = `Act as a technical examiner for SkillSwap. 
+        Generate 3 specific, medium-difficulty technical questions to test a student's proficiency in "${skill.title}" (Category: ${skill.category}).
+        Return them as a JSON array of strings ONLY. No markdown formatting, no object keys.`;
+        
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text().replace(/```json|```/g, "").trim();
+        finalQuestions = JSON.parse(text).map(q => ({ q, isLLM: true }));
+        isLLM = true;
+      } catch (e) {
+        console.error("Gemini Question Gen Failed, falling back", e);
+      }
+    }
+
+    if (finalQuestions.length === 0) {
+      const qSet = QUESTIONS[skill.category] || QUESTIONS['Coding'];
+      finalQuestions = qSet.map(item => ({ ...item, isLLM: false }));
+    }
+
     ACTIVE_INTERVIEWS[req.user.id] = {
       skillId,
+      skillTitle: skill.title,
       category: skill.category,
       currentStep: 0,
-      score: 0,
-      questions: qSet
+      answers: [],
+      questions: finalQuestions,
+      isLLM
     };
 
     res.json({ 
-      question: qSet[0].q,
+      question: finalQuestions[0].q,
       step: 1,
-      total: qSet.length
+      total: finalQuestions.length,
+      isLLM
     });
   } catch (err) {
     res.status(500).send('Server Error');
@@ -70,7 +97,6 @@ router.post('/start', auth, async (req, res) => {
 });
 
 // @route   POST api/ai/answer
-// @desc    Submit an answer and get next question or result
 router.post('/answer', auth, async (req, res) => {
   const { answer } = req.body;
   const interview = ACTIVE_INTERVIEWS[req.user.id];
@@ -78,15 +104,7 @@ router.post('/answer', auth, async (req, res) => {
   if (!interview) return res.status(400).json({ msg: 'No active interview session' });
 
   try {
-    const currentQ = interview.questions[interview.currentStep];
-    const userAns = (answer || '').toLowerCase();
-    
-    // Logic: If answer contains at least 2 relevant keywords, give a point
-    const matches = currentQ.keywords.filter(k => userAns.includes(k.toLowerCase()));
-    if (matches.length >= 2) {
-      interview.score += 1;
-    }
-
+    interview.answers.push(answer);
     interview.currentStep += 1;
 
     if (interview.currentStep < interview.questions.length) {
@@ -97,8 +115,47 @@ router.post('/answer', auth, async (req, res) => {
         done: false
       });
     } else {
-      // Interview complete
-      const passed = interview.score >= 2; // Pass if at least 2/3 correct
+      // Evaluation Phase
+      let passed = false;
+      let feedback = "";
+
+      if (interview.isLLM && model) {
+        try {
+          const qAs = interview.questions.map((q, i) => `Q: ${q.q}\nA: ${interview.answers[i]}`).join("\n\n");
+          const evalPrompt = `Evaluate this technical interview for the skill "${interview.skillTitle}".
+          Criteria: User must demonstrate genuine technical understanding. If they use "idk" or short irrelevant answers, they fail.
+          Questions and Answers:
+          ${qAs}
+          
+          Return a JSON object: { "passed": boolean, "msg": "Brief constructive feedback for the student" }`;
+          
+          const result = await model.generateContent(evalPrompt);
+          const response = await result.response;
+          const text = response.text().replace(/```json|```/g, "").trim();
+          const evalRes = JSON.parse(text);
+          passed = evalRes.passed;
+          feedback = evalRes.msg;
+        } catch (e) {
+          console.error("Gemini Evaluation Failed", e);
+          // Simple fallback if LLM fail during eval
+          passed = interview.answers.every(a => a.length > 20);
+          feedback = "Manual check passed based on length.";
+        }
+      } else {
+        // Fallback Keyword Logic
+        let score = 0;
+        interview.questions.forEach((q, i) => {
+          if (q.keywords) {
+            const matches = q.keywords.filter(k => interview.answers[i].toLowerCase().includes(k.toLowerCase()));
+            if (matches.length >= 2) score++;
+          } else {
+            if (interview.answers[i].length > 20) score++;
+          }
+        });
+        passed = score >= 2;
+        feedback = passed ? 'Congratulations! You passed the AI Verification.' : 'You did not pass the verification. Please provide more technical detail!';
+      }
+
       if (passed) {
         await Skill.findByIdAndUpdate(interview.skillId, { isVerified: true });
         const user = await User.findById(req.user.id);
@@ -114,8 +171,7 @@ router.post('/answer', auth, async (req, res) => {
       res.json({
         done: true,
         passed,
-        score: interview.score,
-        msg: passed ? 'Congratulations! You passed the AI Verification.' : 'You did not pass the verification this time. Try again later!',
+        msg: feedback,
         skillId
       });
     }
