@@ -1015,15 +1015,24 @@ function setupChatHeader(c) {
        acceptBtn.style.display = 'none';
     } else {
        acceptBtn.style.display = 'block';
-       if(USER && USER.acceptedExchanges && USER.acceptedExchanges.includes(c.room)) {
-         acceptBtn.textContent = 'Exchange Completed';
-         acceptBtn.disabled = true;
-         acceptBtn.style.opacity = '0.6';
-       } else {
-         acceptBtn.textContent = 'Accept Exchange';
-         acceptBtn.disabled = false;
-         acceptBtn.style.opacity = '1';
-       }
+        // Check Escrow state
+        const isPending = USER && USER.pendingExchanges && USER.pendingExchanges.includes(c.room);
+        const isCompleted = USER && USER.acceptedExchanges && USER.acceptedExchanges.includes(c.room);
+
+        if(isPending) {
+          acceptBtn.textContent = 'Release Escrow Points';
+          acceptBtn.disabled = false;
+          acceptBtn.style.opacity = '1';
+          acceptBtn.style.display = 'block';
+        } else if(isCompleted) {
+          acceptBtn.textContent = 'Exchange Completed';
+          acceptBtn.disabled = true;
+          acceptBtn.style.opacity = '0.6';
+          acceptBtn.style.display = 'block';
+        } else {
+          // Hide if no active or completed exchange
+          acceptBtn.style.display = 'none';
+        }
     }
   }
 }
@@ -1106,6 +1115,15 @@ function openModal(s){
   document.getElementById('mStudent').textContent=s.provider.name;
   document.getElementById('mDept').textContent=`${s.provider.department} · Year ${s.provider.year}`;
   
+  // Portfolio Link Logic
+  const portBtn = document.getElementById('mPort');
+  if(s.portfolioUrl) {
+    portBtn.style.display = 'block';
+    portBtn.onclick = () => window.open(s.portfolioUrl, '_blank');
+  } else {
+    portBtn.style.display = 'none';
+  }
+  
   const reqBtn = document.getElementById('mReq');
   const chatBtnModal = document.getElementById('mChat2');
   const saveBtnModal = document.getElementById('mSaveMentor');
@@ -1166,6 +1184,8 @@ function openModal(s){
       const data = await res.json();
       showToast(`🎉 ${data.msg}`);
       USER.points = data.newPoints;
+      if(!USER.pendingExchanges) USER.pendingExchanges = [];
+      USER.pendingExchanges.push(room);
       localStorage.setItem('user', JSON.stringify(USER));
       updateAuthUI();
       if(currentPage === 'profile') renderProfile();
@@ -1201,6 +1221,7 @@ function openModal(s){
     };
     socket.emit('sendMessage', initialMsg);
     
+    setupChatHeader(activeConv);
     goto('chat');
   };
   modal.classList.add('open');
@@ -1619,12 +1640,7 @@ function renderConvos(){
       </div>`;
     div.addEventListener('click',()=>{
       activeConv=c;
-      document.getElementById('cmAv').style.background=c.ab;
-      document.getElementById('cmAv').style.color=c.ac;
-      document.getElementById('cmAv').textContent=c.init;
-      document.getElementById('cmName').textContent=c.name;
-      document.getElementById('cmStatus').textContent = '🟢 Online · Active';
-      document.getElementById('chatActions').style.display = 'flex';
+      setupChatHeader(c);
       socket.emit('join', c.room);
       fetchMessages(c.id);
       renderConvos();
@@ -1698,6 +1714,9 @@ async function acceptExchange() {
     USER.points = data.newPoints;
     if(data.exchangesCompleted !== undefined) USER.exchangesCompleted = data.exchangesCompleted;
     if(data.acceptedExchanges) USER.acceptedExchanges = data.acceptedExchanges;
+    
+    // Update pending
+    if(USER.pendingExchanges) USER.pendingExchanges = USER.pendingExchanges.filter(id => id !== activeConv.room);
     
     localStorage.setItem('user', JSON.stringify(USER));
     updateAuthUI();
