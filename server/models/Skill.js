@@ -17,6 +17,7 @@ const SkillSchema = new mongoose.Schema({
   deliveryTime: { type: String },
   tags: [{ type: String }],
   portfolioUrl: { type: String },
+  level: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced'], default: 'Intermediate' },
   isVerified: { type: Boolean, default: false },
   provider: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   createdAt: { type: Date, default: Date.now }

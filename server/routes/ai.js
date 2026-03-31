@@ -48,6 +48,28 @@ const QUESTIONS = {
 
 const ACTIVE_INTERVIEWS = {};
 
+// Rate limiting: max 3 attempts per skill per day
+const AI_ATTEMPTS = {}; // key: `${userId}_${skillId}`, value: { count, resetTime }
+
+function checkRateLimit(userId, skillId) {
+  const key = `${userId}_${skillId}`;
+  const now = Date.now();
+  const entry = AI_ATTEMPTS[key];
+  
+  if (!entry || now > entry.resetTime) {
+    AI_ATTEMPTS[key] = { count: 1, resetTime: now + 24 * 60 * 60 * 1000 };
+    return { allowed: true, remaining: 2 };
+  }
+  
+  if (entry.count >= 3) {
+    const hoursLeft = Math.ceil((entry.resetTime - now) / (60 * 60 * 1000));
+    return { allowed: false, remaining: 0, hoursLeft };
+  }
+  
+  entry.count += 1;
+  return { allowed: true, remaining: 3 - entry.count };
+}
+
 // @route   POST api/ai/start
 router.post('/start', auth, async (req, res) => {
   const { skillId } = req.body;
@@ -55,6 +77,12 @@ router.post('/start', auth, async (req, res) => {
     const skill = await Skill.findById(skillId);
     if (!skill) return res.status(404).json({ msg: 'Skill not found' });
     if (skill.provider.toString() !== req.user.id) return res.status(401).json({ msg: 'Unauthorized' });
+
+    // Rate limit check
+    const rateCheck = checkRateLimit(req.user.id, skillId);
+    if (!rateCheck.allowed) {
+      return res.status(429).json({ msg: `You've used all 3 attempts for today. Try again in ~${rateCheck.hoursLeft} hours.` });
+    }
 
     let finalQuestions = [];
     let isLLM = false;
@@ -64,7 +92,7 @@ router.post('/start', auth, async (req, res) => {
         const prompt = `Act as a technical examiner for SkillSwap. 
         Generate 3 specific, medium-difficulty technical questions to test a student's proficiency in "${skill.title}" (Category: ${skill.category}).
         Return them as a JSON array of strings ONLY. No markdown formatting, no object keys.`;
-        
+
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text().replace(/```json|```/g, "").trim();
@@ -90,7 +118,7 @@ router.post('/start', auth, async (req, res) => {
       isLLM
     };
 
-    res.json({ 
+    res.json({
       question: finalQuestions[0].q,
       step: 1,
       total: finalQuestions.length,
@@ -133,7 +161,7 @@ router.post('/answer', auth, async (req, res) => {
           ${qAs}
           
           Return a JSON object: { "passed": boolean, "msg": "Brief constructive feedback for the student" }`;
-          
+
           const result = await model.generateContent(evalPrompt);
           const response = await result.response;
           const text = response.text().replace(/```json|```/g, "").trim();
@@ -169,7 +197,7 @@ router.post('/answer', auth, async (req, res) => {
           await user.save();
         }
       }
-      
+
       const skillId = interview.skillId;
       delete ACTIVE_INTERVIEWS[req.user.id];
 

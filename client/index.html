@@ -27,6 +27,39 @@
   .ai-msg.thinking span:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
 
+  /* Notification Bell */
+  .notif-wrap { position:relative; cursor:pointer; }
+  .notif-bell { font-size:1.2rem; padding:6px; border-radius:50%; transition:background .2s; }
+  .notif-bell:hover { background:var(--bg2); }
+  .notif-count { position:absolute; top:-2px; right:-4px; background:var(--rose); color:#fff; font-size:.6rem; font-weight:800; min-width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid var(--bg); }
+  .notif-dropdown { position:absolute; top:40px; right:0; width:340px; max-height:400px; overflow-y:auto; background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 40px rgba(26,23,20,.12); z-index:500; display:none; }
+  .notif-dropdown.open { display:block; animation:fadeUp .25s ease; }
+  .notif-header { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .notif-header h4 { font-family:'Playfair Display',serif; font-size:1rem; }
+  .notif-mark-read { font-size:.75rem; color:var(--rose); cursor:pointer; font-weight:600; border:none; background:none; }
+  .notif-item { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:flex-start; transition:background .15s; }
+  .notif-item:hover { background:var(--bg2); }
+  .notif-item.unread { background:rgba(232,96,76,.04); }
+  .notif-item:last-child { border-bottom:none; }
+  .notif-icon { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0; }
+  .notif-text { font-size:.82rem; color:var(--text); line-height:1.4; }
+  .notif-time { font-size:.7rem; color:var(--muted); margin-top:2px; }
+  .notif-empty { padding:30px; text-align:center; color:var(--muted); font-size:.85rem; }
+
+  /* Skill Level Badges */
+  .level-badge { font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:20px; }
+  .level-badge.beginner { background:#dcfce7; color:#16a34a; }
+  .level-badge.intermediate { background:#dbeafe; color:#2563eb; }
+  .level-badge.advanced { background:#fef3c7; color:#d97706; }
+
+  /* Dynamic Review Cards */
+  .dyn-review { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px; }
+  .dyn-review .rv-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .dyn-review .rv-name { font-weight:600; font-size:.9rem; }
+  .dyn-review .rv-stars { color:#f59e0b; }
+  .dyn-review .rv-text { font-size:.85rem; color:var(--sub); line-height:1.5; }
+  .dyn-review .rv-date { font-size:.72rem; color:var(--muted); margin-top:6px; }
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
@@ -438,6 +471,19 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
   </div>
   <div class="nav-r">
     <div class="pts-badge" id="navPts">🌟 0 pts</div>
+    <div class="notif-wrap" id="notifWrap" onclick="toggleNotifDropdown()" style="display:none;">
+      <div class="notif-bell">🔔</div>
+      <div class="notif-count" id="notifCount" style="display:none;">0</div>
+      <div class="notif-dropdown" id="notifDropdown">
+        <div class="notif-header">
+          <h4>Notifications</h4>
+          <button class="notif-mark-read" onclick="event.stopPropagation();markAllRead()">Mark all read</button>
+        </div>
+        <div id="notifList">
+          <div class="notif-empty">No notifications yet</div>
+        </div>
+      </div>
+    </div>
     <div id="navAuthButtons">
       <button class="btn-o" onclick="goto('auth')">Sign In</button>
       <button class="btn-f" onclick="goto('create')">＋ List a Skill</button>
@@ -714,10 +760,9 @@ label{display:block;font-size:.84rem;font-weight:600;margin-bottom:7px;color:var
       <div class="frow">
         <label>Your Experience Level</label>
         <select class="fselect" id="f-level">
-          <option>Beginner (learning as I go)</option>
-          <option selected>Intermediate (solid foundation)</option>
-          <option>Advanced (confident & fast)</option>
-          <option>Expert (professional level)</option>
+          <option value="Beginner">🌱 Beginner (learning as I go)</option>
+          <option value="Intermediate" selected>⚡ Intermediate (solid foundation)</option>
+          <option value="Advanced">🔥 Advanced (confident & professional)</option>
         </select>
       </div>
     </div>
@@ -1130,6 +1175,7 @@ function renderCards(){
       <div class="ch">
         <span class="cchip" style="background:${p?.cb || 'var(--rose-soft)'};color:${p?.cc || 'var(--rose)'}">${cat?.em || '✦'} ${s.category}</span>
         <div style="display:flex;align-items:center;gap:6px;">
+          ${s.level ? `<span class="level-badge ${(s.level||'').toLowerCase()}">${s.level === 'Beginner' ? '🌱' : s.level === 'Advanced' ? '🔥' : '⚡'} ${s.level}</span>` : ''}
           ${s.isVerified ? '<span class="vbadge">✦ Verified</span>' : ''}
           <span class="rrow"><span class="st">★</span>${s.provider.avgRating || '0.0'}</span>
         </div>
@@ -1379,6 +1425,8 @@ async function submitListing(){
   const portfolioUrl=document.getElementById('f-portfolio').value.trim();
   const exchangeMethod=document.querySelector('.exopt.active .eo-label').textContent;
 
+  const level = document.getElementById('f-level').value;
+
   if(!title || !description || !category){showToast('⚠️ Please fill in all required fields');return;}
 
   const isEdit = !!window._editingSkillId;
@@ -1392,7 +1440,7 @@ async function submitListing(){
         'Content-Type': 'application/json',
         'x-auth-token': TOKEN
       },
-      body: JSON.stringify({ title, description, category, points, deliveryTime, exchangeMethod, tags: formTags, portfolioUrl })
+      body: JSON.stringify({ title, description, category, points, deliveryTime, exchangeMethod, tags: formTags, portfolioUrl, level })
     });
     if(!res.ok) {
       const errData = await res.json().catch(()=>({msg:'Failed to save skill.'}));
@@ -1505,9 +1553,12 @@ function updateAuthUI() {
   const norm = document.getElementById('navAuthButtons');
   const user = document.getElementById('navUserButton');
   const pts = document.getElementById('navPts');
+  const notifWrap = document.getElementById('notifWrap');
   if(norm) norm.style.display = (TOKEN && USER) ? 'none' : 'flex';
   if(user) user.style.display = (TOKEN && USER) ? 'flex' : 'none';
   if(pts) pts.textContent = (TOKEN && USER) ? `🌟 ${USER.points || 0} pts` : '🌟 0 pts';
+  if(notifWrap) notifWrap.style.display = (TOKEN && USER) ? 'block' : 'none';
+  if(TOKEN && USER) { fetchNotifications(); socket.emit('joinUser', USER._id); }
 }
 
 function renderProfile() {
@@ -1934,7 +1985,10 @@ async function startAI(skillId) {
     });
     removeAIThinking();
     
-    if(!res.ok) throw new Error('Failed to start AI interview');
+    if(!res.ok) {
+      const errData = await res.json().catch(()=>({}));
+      throw new Error(errData.msg || 'Failed to start AI interview');
+    }
     const data = await res.json();
     
     document.getElementById('aiInputArea').style.display = 'flex';
@@ -2021,6 +2075,240 @@ function closeAI() {
 document.getElementById('aiAnsInput').addEventListener('keydown', e => {
   if(e.key === 'Enter') submitAIAnswer();
 });
+
+// ─── NOTIFICATION SYSTEM ───
+async function fetchNotifications() {
+  if(!TOKEN) return;
+  try {
+    const res = await fetch(`${API_URL}/notifications`, {
+      headers: { 'x-auth-token': TOKEN }
+    });
+    if(!res.ok) return;
+    const data = await res.json();
+    renderNotifications(data.notifications, data.unreadCount);
+  } catch(err) { console.error('Notif fetch error:', err); }
+}
+
+function renderNotifications(notifications, unreadCount) {
+  const countEl = document.getElementById('notifCount');
+  const listEl = document.getElementById('notifList');
+  
+  if(unreadCount > 0) {
+    countEl.style.display = 'flex';
+    countEl.textContent = unreadCount > 9 ? '9+' : unreadCount;
+  } else {
+    countEl.style.display = 'none';
+  }
+  
+  if(!notifications || notifications.length === 0) {
+    listEl.innerHTML = '<div class="notif-empty">No notifications yet 🔔</div>';
+    return;
+  }
+  
+  const NOTIF_ICONS = {
+    exchange_request: { icon: '🤝', bg: 'var(--sage-soft)' },
+    escrow_release: { icon: '💰', bg: 'var(--amber-soft)' },
+    rating: { icon: '⭐', bg: '#fef3c7' },
+    verification: { icon: '🤖', bg: 'var(--indigo-soft)' }
+  };
+  
+  listEl.innerHTML = notifications.map(n => {
+    const cfg = NOTIF_ICONS[n.type] || { icon: '🔔', bg: 'var(--bg2)' };
+    const timeAgo = getTimeAgo(new Date(n.createdAt));
+    return `<div class="notif-item ${n.read ? '' : 'unread'}">
+      <div class="notif-icon" style="background:${cfg.bg}">${cfg.icon}</div>
+      <div>
+        <div class="notif-text">${n.message}</div>
+        <div class="notif-time">${timeAgo}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getTimeAgo(date) {
+  const diff = Date.now() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  if(mins < 1) return 'Just now';
+  if(mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if(hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function toggleNotifDropdown() {
+  const dd = document.getElementById('notifDropdown');
+  dd.classList.toggle('open');
+}
+
+async function markAllRead() {
+  try {
+    await fetch(`${API_URL}/notifications/read-all`, {
+      method: 'PUT',
+      headers: { 'x-auth-token': TOKEN }
+    });
+    fetchNotifications();
+    showToast('✅ All notifications marked as read');
+  } catch(err) { console.error(err); }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('notifWrap');
+  const dd = document.getElementById('notifDropdown');
+  if(wrap && !wrap.contains(e.target) && dd) dd.classList.remove('open');
+});
+
+// Real-time notification listener
+socket.on('notification', (data) => {
+  showToast(`🔔 ${data.message}`);
+  fetchNotifications();
+});
+
+// ─── DYNAMIC PROFILE TABS ───
+async function renderProfileReviews() {
+  if(!USER) return;
+  const container = document.querySelectorAll('#pt-reviews')[1]; // The detailed one
+  if(!container) return;
+  
+  try {
+    const res = await fetch(`${API_URL}/ratings/${USER._id}`);
+    if(!res.ok) return;
+    const ratings = await res.json();
+    
+    if(ratings.length === 0) {
+      container.innerHTML = `<div class="section-title">Reviews</div>
+        <div class="section-sub">What others say about working with you</div>
+        <div style="text-align:center;padding:40px;color:var(--muted);">No reviews yet. Complete exchanges to get rated! ⭐</div>`;
+      return;
+    }
+    
+    const avg = (ratings.reduce((a, r) => a + r.score, 0) / ratings.length).toFixed(1);
+    const dist = [0,0,0,0,0];
+    ratings.forEach(r => dist[r.score - 1]++);
+    
+    let html = `<div class="section-title">Reviews</div>
+      <div class="section-sub">What others say about working with you</div>
+      <div style="margin-bottom:20px;">
+        <div style="display:flex;gap:20px;align-items:center;margin-bottom:18px;flex-wrap:wrap;">
+          <div style="text-align:center;">
+            <div style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:900;color:var(--text);">${avg}</div>
+            <div style="color:#f59e0b;font-size:1.1rem;">${'★'.repeat(Math.round(avg))}${'☆'.repeat(5 - Math.round(avg))}</div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:3px;">${ratings.length} review${ratings.length > 1 ? 's' : ''}</div>
+          </div>
+          <div style="flex:1;min-width:160px;">`;
+    
+    for(let i = 5; i >= 1; i--) {
+      const pct = ratings.length > 0 ? Math.round((dist[i-1] / ratings.length) * 100) : 0;
+      html += `<div class="rating-bar"><span class="rb-label">${i} star${i>1?'s':''}</span><div class="rb-track"><div class="rb-fill" style="width:${pct}%"></div></div><span class="rb-val">${dist[i-1]}</span></div>`;
+    }
+    
+    html += `</div></div></div>`;
+    
+    ratings.forEach(r => {
+      const name = r.rater?.name || 'Anonymous';
+      const stars = '★'.repeat(r.score) + '☆'.repeat(5 - r.score);
+      const date = new Date(r.timestamp).toLocaleDateString();
+      html += `<div class="dyn-review">
+        <div class="rv-head"><span class="rv-name">${name}</span><span class="rv-stars">${stars}</span></div>
+        ${r.comment ? `<div class="rv-text">"${r.comment}"</div>` : ''}
+        <div class="rv-date">${date}</div>
+      </div>`;
+    });
+    
+    container.innerHTML = html;
+  } catch(err) { console.error('Reviews fetch error:', err); }
+}
+
+function renderProfileBadges() {
+  if(!USER) return;
+  const container = document.querySelectorAll('#pt-badges')[1]; // The detailed one
+  if(!container) return;
+  
+  const badges = [
+    { icon: '🏆', name: 'Top Rated', desc: 'Maintained 4.8+ rating', unlocked: (USER.avgRating || 0) >= 4.8 },
+    { icon: '✦', name: 'AI Verified', desc: 'Passed AI Skill Interview', unlocked: (USER.verifiedSkills || []).length > 0 },
+    { icon: '🔥', name: '10 Exchanges', desc: 'Completed 10 swaps', unlocked: (USER.exchangesCompleted || 0) >= 10 },
+    { icon: '⚡', name: 'Active Trader', desc: 'Completed 5+ exchanges', unlocked: (USER.exchangesCompleted || 0) >= 5 },
+    { icon: '💫', name: '20 Exchanges', desc: `${Math.max(0, 20 - (USER.exchangesCompleted || 0))} more to unlock`, unlocked: (USER.exchangesCompleted || 0) >= 20 },
+    { icon: '👑', name: 'Campus Legend', desc: '50+ exchanges completed', unlocked: (USER.exchangesCompleted || 0) >= 50 },
+    { icon: '🎯', name: 'Point Master', desc: 'Earned 500+ points', unlocked: (USER.points || 0) >= 500 },
+    { icon: '🤝', name: 'Networker', desc: 'Saved 5+ mentors', unlocked: (USER.savedMentors || []).length >= 5 },
+  ];
+  
+  const unlocked = badges.filter(b => b.unlocked).length;
+  
+  let html = `<div class="section-title">Badges</div>
+    <div class="section-sub">${unlocked} of ${badges.length} badges earned</div>
+    <div class="badge-grid">`;
+  
+  badges.forEach(b => {
+    html += `<div class="badge" style="${b.unlocked ? '' : 'opacity:.4;'}">
+      <div class="badge-icon">${b.icon}</div>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${b.desc}</div>
+    </div>`;
+  });
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderProfileHistory() {
+  if(!USER) return;
+  const container = document.querySelectorAll('#pt-history')[1]; // The detailed one
+  if(!container) return;
+  
+  let html = `<div class="section-title">Exchange History</div>
+    <div class="section-sub">Your completed and pending exchanges</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">`;
+  
+  const accepted = USER.acceptedExchanges || [];
+  const pending = USER.pendingExchanges || [];
+  
+  if(accepted.length === 0 && pending.length === 0) {
+    html += `<div style="text-align:center;padding:40px;color:var(--muted);">No exchanges yet. Start by requesting a skill! 🚀</div>`;
+  } else {
+    accepted.forEach(convId => {
+      html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--sage-soft);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">✅</div>
+        <div style="flex:1;"><div style="font-size:.9rem;font-weight:600;">Exchange Completed</div><div style="font-size:.78rem;color:var(--muted);">${convId.substring(0,8)}...</div></div>
+        <span style="padding:5px 12px;border-radius:20px;background:var(--sage-soft);color:var(--sage);font-size:.76rem;font-weight:600;">Completed</span>
+      </div>`;
+    });
+    
+    pending.forEach(convId => {
+      html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--amber-soft);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">⏳</div>
+        <div style="flex:1;"><div style="font-size:.9rem;font-weight:600;">Exchange In Progress</div><div style="font-size:.78rem;color:var(--muted);">${convId.substring(0,8)}...</div></div>
+        <span style="padding:5px 12px;border-radius:20px;background:var(--amber-soft);color:var(--amber);font-size:.76rem;font-weight:600;">In Progress</span>
+      </div>`;
+    });
+  }
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Hook profile tab switching to load dynamic data
+const _origSwitchPTab = typeof switchPTab === 'function' ? switchPTab : null;
+function switchPTab(tab, id) {
+  document.querySelectorAll('.ph-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  
+  const allTabs = ['pt-listings', 'pt-network', 'pt-reviews', 'pt-badges', 'pt-history'];
+  allTabs.forEach(tabId => {
+    document.querySelectorAll(`#${tabId}`).forEach(el => el.style.display = 'none');
+  });
+  
+  document.querySelectorAll(`#${id}`).forEach(el => el.style.display = 'block');
+  
+  // Load dynamic data
+  if(id === 'pt-reviews') renderProfileReviews();
+  if(id === 'pt-badges') renderProfileBadges();
+  if(id === 'pt-history') renderProfileHistory();
+}
+
 </script>
 </body>
 </html>

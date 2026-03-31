@@ -30,6 +30,10 @@ app.use('/api/skills', require('./routes/skills'));
 app.use('/api/ratings', require('./routes/ratings'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/messages', require('./routes/messages'));
+app.use('/api/notifications', require('./routes/notifications'));
+
+// Make io accessible in routes
+app.set('io', io);
 
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '../client')));
@@ -46,6 +50,12 @@ io.on('connection', (socket) => {
   socket.on('join', (room) => {
     socket.join(room);
     console.log('User joined room:', room);
+  });
+
+  // Join user's personal room for notifications
+  socket.on('joinUser', (userId) => {
+    socket.join(userId);
+    console.log('User joined personal room:', userId);
   });
 
   socket.on('sendMessage', async ({ sender, receiver, text, conversationId }) => {

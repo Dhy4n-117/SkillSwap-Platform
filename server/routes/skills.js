@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const Skill = require('../models/Skill');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 // @route   GET api/skills/stats
 // @desc    Get platform statistics
@@ -62,7 +63,7 @@ router.get('/', async (req, res) => {
 // @desc    Create a skill listing
 // @access  Private
 router.post('/', auth, async (req, res) => {
-  const { title, category, description, exchangeMethod, points, deliveryTime, tags, portfolioUrl } = req.body;
+  const { title, category, description, exchangeMethod, points, deliveryTime, tags, portfolioUrl, level } = req.body;
 
   try {
     const newSkill = new Skill({
@@ -74,6 +75,7 @@ router.post('/', auth, async (req, res) => {
       deliveryTime,
       tags,
       portfolioUrl,
+      level: level || 'Intermediate',
       provider: req.user.id
     });
 
@@ -138,6 +140,18 @@ router.post('/exchange/request', auth, async (req, res) => {
     receiver.pendingExchanges.push(convId);
     await receiver.save();
 
+    // Create notification for provider
+    const requester = await User.findById(req.user.id).select('name');
+    const notif = new Notification({
+      user: providerId,
+      type: 'exchange_request',
+      message: `${requester.name} requested a skill exchange with you!`,
+      fromUser: req.user.id
+    });
+    await notif.save();
+    const io = req.app.get('io');
+    if (io) io.to(providerId).emit('notification', { type: 'exchange_request', message: notif.message });
+
     res.json({ msg: 'Points placed in Escrow', newPoints: receiver.points });
   } catch (err) { res.status(500).send('Server Error'); }
 });
@@ -171,6 +185,18 @@ router.post('/exchange/accept', auth, async (req, res) => {
     await receiver.save();
     await provider.save();
 
+    // Create notification for provider
+    const releaserName = receiver.name || 'A user';
+    const notif = new Notification({
+      user: providerId,
+      type: 'escrow_release',
+      message: `${releaserName} released ${points} escrow points to you! 🎉`,
+      fromUser: req.user.id
+    });
+    await notif.save();
+    const io = req.app.get('io');
+    if (io) io.to(providerId).emit('notification', { type: 'escrow_release', message: notif.message });
+
     res.json({ 
       msg: 'Escrow released! Exchange accepted.', 
       newPoints: receiver.points, 
@@ -187,7 +213,7 @@ router.post('/exchange/accept', auth, async (req, res) => {
 // @desc    Update a skill listing
 // @access  Private
 router.put('/:id', auth, async (req, res) => {
-  const { title, category, description, exchangeMethod, points, deliveryTime, tags, portfolioUrl } = req.body;
+  const { title, category, description, exchangeMethod, points, deliveryTime, tags, portfolioUrl, level } = req.body;
   try {
     let skill = await Skill.findById(req.params.id);
     if (!skill) return res.status(404).json({ msg: 'Skill not found' });
@@ -195,7 +221,7 @@ router.put('/:id', auth, async (req, res) => {
 
     skill = await Skill.findByIdAndUpdate(
       req.params.id,
-      { $set: { title, category, description, exchangeMethod, points, deliveryTime, tags, portfolioUrl } },
+      { $set: { title, category, description, exchangeMethod, points, deliveryTime, tags, portfolioUrl, level } },
       { new: true }
     );
     res.json(skill);
