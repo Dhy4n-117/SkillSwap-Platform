@@ -23,7 +23,7 @@ connectDB();
 // Init Middleware
 app.use(express.json({ extended: false }));
 app.use(cors());
-
+//const
 // Define Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/skills', require('./routes/skills'));
@@ -72,7 +72,7 @@ io.on('connection', (socket) => {
     console.log('Client disconnected');
   });
 });
-
+//3301
 // Health check for Render
 app.get('/health', (req, res) => res.status(200).send('OK'));
 
